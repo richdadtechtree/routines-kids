@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>은둥이네 꾸준히 습관 만들기 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════
+   기본 변수
+════════════════════════════════════ */
+:root {
+  --pri:    #6C63FF;
+  --pri-l:  #EEF0FF;
+  --ok:     #22C55E;
+  --warn:   #F59E0B;
+  --err:    #EF4444;
+  --bg:     #F8F7FF;
+  --card:   #FFFFFF;
+  --txt:    #1E1B4B;
+  --muted:  #6B7280;
+  --bdr:    #E5E7EB;
+  --r:      14px;
+  --sh:     0 2px 12px rgba(108,99,255,.08);
+  --sh-lg:  0 8px 32px rgba(108,99,255,.15);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; overflow-x: hidden;
+}
+
+/* ════════════════════════════════════
+   헤더
+════════════════════════════════════ */
+.app-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--bdr);
+  padding: 0 12px;
+  height: 52px;
+  position: sticky; top: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--sh);
+  gap: 8px;
+}
+.logo { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+.logo-icon { font-size: 20px; flex-shrink: 0; }
+.logo-text {
+  font-size: 13px; font-weight: 900; color: var(--pri);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hbtns { display: flex; gap: 4px; flex-shrink: 0; }
+.hbtn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bdr);
+  background: var(--card);
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hbtn:active { background: var(--pri-l); border-color: var(--pri); }
+
+/* ════════════════════════════════════
+   메인 레이아웃
+════════════════════════════════════ */
+.main {
+  padding: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* ════════════════════════════════════
+   자녀 탭
+════════════════════════════════════ */
+.child-tabs {
+  display: flex; gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto; padding-bottom: 2px;
+  scrollbar-width: none; align-items: center;
+}
+.child-tabs::-webkit-scrollbar { display: none; }
+.ctab-wrap { display: flex; align-items: stretch; flex-shrink: 0; }
+.ctab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border-radius: 100px;
+  border: 2px solid var(--bdr); background: var(--card);
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  white-space: nowrap; transition: all .18s; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctab.active { color: white; }
+.ctab-av { width: 20px; height: 20px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.ctab-edit {
+  padding: 0 10px;
+  border-radius: 0 100px 100px 0;
+  border: 2px solid var(--bdr); border-left: none;
+  background: #f9f9f9; cursor: pointer; font-size: 14px;
+  font-family: inherit; display: flex; align-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.add-child-btn {
+  padding: 7px 13px; border-radius: 100px;
+  border: 2px dashed var(--bdr); background: transparent;
+  cursor: pointer; font-size: 12px; color: var(--muted);
+  white-space: nowrap; font-family: inherit; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ════════════════════════════════════
+   요약 카드
+════════════════════════════════════ */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+.summary-card {
+  background: var(--card); border-radius: var(--r);
+  padding: 12px 8px; text-align: center;
+  box-shadow: var(--sh); border: 1px solid var(--bdr);
+}
+.summary-num   { font-size: 22px; font-weight: 900; color: var(--pri); line-height: 1; }
+.summary-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* ════════════════════════════════════
+   연속 뱃지
+════════════════════════════════════ */
+.streak-area { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.streak-badge {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; border: 2px solid;
+}
+.streak-badge.fire  { background:#FFF7ED; border-color:#F97316; color:#9A3412; }
+.streak-badge.spark { background:#FFFBEB; border-color:#EAB308; color:#713F12; }
+.streak-badge.hint  { background:#F9FAFB; border-color:var(--bdr); color:var(--muted); }
+
+/* ════════════════════════════════════
+   주간 네비
+════════════════════════════════════ */
+.week-nav {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.week-label { font-size: 13px; font-weight: 700; }
+.wnav-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--bdr); background: var(--card);
+  cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.wnav-btn:active { background: var(--pri-l); }
+
+/* ════════════════════════════════════
+   매트릭스 — 핵심
+   루틴명 열: 고정폭, 날짜 7열: 균등 분배
+════════════════════════════════════ */
+:root { --r-col: 110px; }
+
+.matrix-wrap {
+  background: var(--card); border-radius: var(--r);
+  box-shadow: var(--sh); border: 1px solid var(--bdr);
+  overflow: hidden; margin-bottom: 12px;
+}
+/* 가로 스크롤 없이 화면에 맞춤 */
+.matrix-scroll { width: 100%; overflow: hidden; }
+table.matrix {
+  width: 100%; border-collapse: collapse;
+  table-layout: fixed; /* 열 너비를 colgroup 기준으로 고정 */
+}
+
+/* 헤더 셀 */
+.matrix th {
+  padding: 8px 2px; text-align: center;
+  font-size: 11px; font-weight: 700;
+  background: #FAFAFA;
+  border-bottom: 1px solid var(--bdr);
+}
+.matrix th.r-col {
+  text-align: left; padding-left: 12px;
+  font-size: 10px; color: var(--muted);
+  width: var(--r-col);
+}
+
+/* 날짜 헤더 */
+.day-hd    { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.day-nm    { font-size: 10px; color: var(--muted); }
+.day-num   { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.day-num.is-today { background: var(--pri); color: white; }
+.day-num.is-sun   { color: #EF4444; }
+.day-num.is-sat   { color: #3B82F6; }
+
+/* 데이터 셀 */
+.matrix td {
+  padding: 4px 2px; text-align: center;
+  border-bottom: 1px solid #F3F4F6;
+  border-right: 1px solid #F3F4F6;
+}
+.matrix td.r-name-cell {
+  text-align: left; padding-left: 12px; padding-right: 6px;
+  width: var(--r-col);
+}
+.matrix tr:last-child td { border-bottom: none; }
+
+/* 루틴 라벨 */
+.r-label  { display: flex; align-items: center; gap: 5px; }
+.r-icon   { font-size: 14px; flex-shrink: 0; }
+.r-info   { min-width: 0; }
+.r-name   {
+  font-size: 11px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: calc(var(--r-col) - 60px);
+}
+.r-time   {
+  font-size: 9px; padding: 1px 5px; border-radius: 100px;
+  font-weight: 600; white-space: nowrap; display: inline-block;
+}
+.t-morning   { background:#FFF7ED; color:#C2410C; }
+.t-afternoon { background:#ECFDF5; color:#065F46; }
+.t-evening   { background:#EFF6FF; color:#1D4ED8; }
+.t-night     { background:#F5F3FF; color:#5B21B6; }
+
+/* 수정/삭제 버튼 */
+.r-actions { display: flex; gap: 2px; margin-left: 3px; flex-shrink: 0; }
+.r-act-btn {
+  padding: 2px 7px; height: 22px; border-radius: 5px;
+  border: none; cursor: pointer; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.r-act-btn.edit { background: #EEF0FF; color: var(--pri); }
+.r-act-btn.del  { background: #FEE2E2; color: #DC2626; }
+
+/* 체크 버튼 */
+.check-cell {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 2px solid var(--bdr); background: transparent;
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto; transition: all .13s; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-cell.done    { background: var(--ok); border-color: var(--ok); color: white; }
+.check-cell:disabled { opacity: .3; cursor: not-allowed; }
+.check-cell:active:not(:disabled) { transform: scale(.9); }
+
+/* 루틴 추가 행 */
+.add-r-row td { padding: 10px 12px !important; border-bottom: none !important; }
+.add-r-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--muted);
+  background: transparent; border: none;
+  cursor: pointer; font-family: inherit;
+}
+
+/* ════════════════════════════════════
+   달성률 바
+════════════════════════════════════ */
+.progress-section {
+  background: var(--card); border-radius: var(--r);
+  padding: 14px; box-shadow: var(--sh);
+  border: 1px solid var(--bdr); margin-bottom: 12px;
+}
+.section-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.prog-row  { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.prog-day  { font-size: 11px; width: 22px; text-align: center; color: var(--muted); flex-shrink: 0; }
+.prog-track{ flex: 1; height: 8px; background: #F3F4F6; border-radius: 100px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 100px; transition: width .4s; }
+.prog-pct  { font-size: 11px; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+
+/* ════════════════════════════════════
+   모달 공통 — 모바일 하단 시트
+════════════════════════════════════ */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 1000;
+  animation: ov-in .2s;
+}
+@keyframes ov-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--card);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 20px 28px;
+  width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--sh-lg);
+  position: relative;
+  animation: m-in .28s cubic-bezier(.34,1.1,.64,1);
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+}
+@keyframes m-in {
+  from { transform: translateY(60px); opacity: .6; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+/* 드래그 핸들 */
+.modal::before {
+  content: '';
+  display: block; width: 36px; height: 4px;
+  background: #D1D5DB; border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.modal-x {
+  position: absolute; top: 18px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: #F3F4F6; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-title { font-size: 17px; font-weight: 900; margin-bottom: 4px; }
+.modal-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+
+/* 폼 */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  margin-bottom: 6px; display: block;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.form-input, .form-select {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--bdr); border-radius: 10px;
+  font-size: 14px; font-family: inherit; outline: none;
+  background: var(--bg);
+}
+.form-input:focus, .form-select:focus { border-color: var(--pri); }
+textarea.form-input { resize: none; line-height: 1.7; }
+
+.icon-picker { display: flex; gap: 5px; flex-wrap: wrap; }
+.icon-opt {
+  width: 40px; height: 40px; border-radius: 9px;
+  border: 2px solid var(--bdr); font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  background: transparent; -webkit-tap-highlight-color: transparent;
+}
+.icon-opt.sel { border-color: var(--pri); background: var(--pri-l); }
+
+.color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid transparent; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.color-dot.sel { border-color: #1E1B4B; transform: scale(1.15); }
+
+.btn-pri {
+  width: 100%; padding: 13px; border-radius: 12px; border: none;
+  background: var(--pri); color: white;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: inherit; margin-top: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-pri:active { opacity: .85; }
+.btn-sec {
+  width: 100%; padding: 13px; border-radius: 12px;
+  border: 1.5px solid var(--bdr); background: transparent;
+  color: var(--muted); font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-sec.neutral:active { border-color: var(--pri); color: var(--pri); }
+.btn-sec:not(.neutral):active { border-color: var(--err); color: var(--err); }
+
+/* ════════════════════════════════════
+   루틴왕 — 항상 중앙 팝업
+════════════════════════════════════ */
+.king-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+  animation: ov-in .2s;
+}
+.king-modal {
+  background: linear-gradient(160deg,#1E1B4B,#312E81);
+  color: white; text-align: center;
+  border-radius: 24px; padding: 28px 24px;
+  width: 100%; max-width: 360px;
+  position: relative; overflow: hidden;
+  animation: m-pop .3s cubic-bezier(.34,1.4,.64,1);
+}
+@keyframes m-pop { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.king-modal::before { display: none; }
+.king-crown  { font-size: 52px; line-height: 1; margin-bottom: 6px; animation: bounce 1s ease infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-8px) rotate(5deg)} }
+.king-title  { font-size: 22px; font-weight: 900; color: #FDE68A; margin-bottom: 3px; }
+.king-month  { font-size: 12px; color: rgba(255,255,255,.65); margin-bottom: 16px; }
+.king-av     { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px; border: 4px solid #FDE68A; }
+.king-name   { font-size: 22px; font-weight: 900; color: white; margin-bottom: 2px; }
+.king-score  { font-size: 30px; font-weight: 900; color: #FDE68A; }
+.king-slabel { font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 14px; }
+.king-stars  { font-size: 20px; letter-spacing: 3px; margin-bottom: 16px; }
+.king-close  { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #FDE68A; color: #1E1B4B; font-size: 14px; font-weight: 900; cursor: pointer; font-family: inherit; }
+.cfp { position: absolute; border-radius: 2px; animation: cff linear forwards; pointer-events: none; }
+@keyframes cff { from{transform:translateY(-20px) rotate(0deg);opacity:1} to{transform:translateY(500px) rotate(720deg);opacity:0} }
+
+/* ════════════════════════════════════
+   사다리
+════════════════════════════════════ */
+.ldr-step-lbl { font-size: 12px; font-weight: 700; color: var(--pri); margin-bottom: 10px; }
+.slot-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.slot-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; flex: 1; max-width: 72px;
+  -webkit-tap-highlight-color: transparent;
+}
+.slot-item:active { transform: scale(.95); }
+.slot-box {
+  width: 100%; aspect-ratio: 1; border-radius: 12px;
+  border: 2.5px dashed var(--bdr); background: #FAFAFA;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; position: relative;
+}
+.slot-item.taken .slot-box { border-style: solid; border-color: var(--pri); background: var(--pri-l); }
+.slot-num   { font-size: 16px; color: #C4B5FD; }
+.slot-badge { position: absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:var(--pri); color:white; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid white; }
+.slot-name  { font-size: 10px; font-weight: 700; color: var(--muted); text-align: center; }
+.slot-item.taken .slot-name { color: var(--pri); }
+.ldr-hint   { text-align: center; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.ldr-cfm    { display: none; width: 100%; padding: 12px; border-radius: 11px; border: none; background: var(--pri); color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.ldr-cfm.show { display: block; }
+.svg-wrap   { background: #F8F7FF; border-radius: 14px; padding: 8px 8px 6px; margin-bottom: 10px; border: 1px solid #E0E7FF; }
+.ldr-top, .ldr-bot { display: flex; }
+.ltc   { flex: 1; text-align: center; }
+.ltc-av { width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2px solid var(--bdr); background: white; }
+.ltc.isu .ltc-av { border-color: var(--pri); background: var(--pri-l); }
+.ltc-nm { font-size: 10px; font-weight: 700; color: var(--muted); }
+.ltc.isu .ltc-nm { color: var(--pri); }
+.lbc   { flex: 1; text-align: center; }
+.rb    { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; background: white; border: 1.5px solid var(--bdr); border-radius: 8px; padding: 4px 2px; min-width: 44px; }
+.rb .ri { font-size: 15px; line-height: 1; }
+.rb .rn { font-size: 9px; font-weight: 700; color: var(--muted); line-height: 1.3; text-align: center; }
+.rb.win { border-color: #F97316; background: #FFF7ED; animation: pop .4s cubic-bezier(.34,1.56,.64,1); }
+.rb.win .rn { color: #9A3412; }
+@keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+.ldr-start { width:100%; padding:12px; border-radius:13px; border:none; background:linear-gradient(135deg,var(--pri),#FF6B9D); color:white; font-size:15px; font-weight:900; cursor:pointer; font-family:inherit; }
+.ldr-start:disabled { opacity:.5; }
+.ldr-result { display:none; text-align:center; padding:12px; background:linear-gradient(135deg,#FFF7ED,#FFFBEB); border-radius:12px; border:2px solid #F97316; margin-bottom:10px; }
+.ldr-result.show { display:block; animation:pop .4s cubic-bezier(.34,1.56,.64,1); }
+.lr-emoji { font-size:32px; margin-bottom:4px; }
+.lr-text  { font-size:14px; font-weight:900; color:#9A3412; }
+.lr-sub   { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* ════════════════════════════════════
+   독서 로그
+════════════════════════════════════ */
+.log-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.log-tab  { padding: 5px 12px; border-radius: 100px; border: 1.5px solid var(--bdr); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--muted); -webkit-tap-highlight-color: transparent; }
+.log-tab.active { background: var(--pri); border-color: var(--pri); color: white; }
+.log-list { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.log-item { background: var(--bg); border: 1px solid var(--bdr); border-radius: 12px; padding: 12px 14px; position: relative; }
+.log-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.log-av   { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.log-child { font-size: 12px; font-weight: 700; }
+.log-date  { font-size: 11px; color: var(--muted); margin-left: auto; }
+.log-text  { font-size: 13px; color: var(--txt); line-height: 1.7; word-break: keep-all; }
+.log-del   { position: absolute; top: 9px; right: 9px; width: 22px; height: 22px; border-radius: 5px; border: none; background: #FEE2E2; color: #DC2626; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.log-empty { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
+.log-empty .ei { font-size: 34px; margin-bottom: 9px; }
+
+/* ════════════════════════════════════
+   태블릿 / 데스크탑 보정
+   기본이 모바일이므로 큰 화면에서만 확장
+════════════════════════════════════ */
+@media (min-width: 600px) {
+  :root { --r-col: 150px; }
+
+  .app-header { padding: 0 20px; height: 56px; }
+  .logo-text  { font-size: 15px; }
+  .hbtn       { width: 42px; height: 42px; font-size: 20px; }
+
+  .main { padding: 16px 20px; }
+
+  .summary-num   { font-size: 24px; }
+  .summary-label { font-size: 11px; }
+
+  .week-label { font-size: 14px; }
+
+  /* 매트릭스 체크 버튼 더 크게 */
+  .check-cell { width: 36px; height: 36px; }
+  .day-num    { width: 28px; height: 28px; font-size: 13px; }
+  .day-nm     { font-size: 11px; }
+  .r-icon     { font-size: 16px; }
+  .r-name     { font-size: 13px; max-width: calc(var(--r-col) - 72px); }
+  .r-time     { font-size: 10px; }
+  .r-act-btn  { width: 24px; height: 24px; font-size: 12px; }
+
+  /* 모달 — 태블릿부터 중앙 팝업 */
+  .overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .modal {
+    border-radius: 22px;
+    max-width: 460px;
+    padding: 24px;
+    padding-bottom: 28px;
+    animation: m-in-desktop .25s cubic-bezier(.34,1.2,.64,1);
+  }
+  @keyframes m-in-desktop {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .modal::before { display: none; } /* 핸들 숨김 */
+}
+
+@media (min-width: 900px) {
+  :root { --r-col: 170px; }
+  .logo-text { font-size: 17px; }
+  .summary-num { font-size: 26px; }
+
+  /* hover 효과 (마우스) */
+  .hbtn:hover     { background: var(--pri-l); border-color: var(--pri); }
+  .wnav-btn:hover { background: var(--pri-l); border-color: var(--pri); }
+  .check-cell:hover:not(:disabled) { border-color: var(--ok); background: #F0FDF4; }
+  .r-act-btn.edit:hover { background: #C7D2FE; }
+  .r-act-btn.del:hover  { background: #FECACA; }
+  .btn-pri:hover  { background: #5B54E8; }
+  .add-r-btn:hover { color: var(--pri); }
+  .add-child-btn:hover { border-color: var(--pri); color: var(--pri); }
+
+  /* 수정/삭제는 hover 시 표시 (데스크탑) */
+  .r-actions { display: none; }
+  .matrix tr:hover .r-actions { display: flex; }
+  .log-del { opacity: 0; transition: opacity .15s; }
+  .log-item:hover .log-del { opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───── 헤더 ───── -->
+<header class="app-header">
+  <div class="logo">
+    <span class="logo-icon">🌟</span>
+    <span class="logo-text">은둥이네 꾸준히 습관 만들기</span>
+  </div>
+  <div class="hbtns">
+    <button class="hbtn" onclick="goToday()" title="오늘">🗓</button>
+    <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
+    <button class="hbtn" onclick="openLadder()" title="사다리 타기">🎰</button>
+    <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
+  </div>
+</header>
+
+<!-- ───── 메인 ───── -->
+<main class="main">
+  <div class="child-tabs" id="childTabs"></div>
+  <div class="summary-row" id="summaryRow"></div>
+  <div class="streak-area" id="streakArea"></div>
+  <div class="week-nav">
+    <button class="wnav-btn" onclick="prevWeek()">◀</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button class="wnav-btn" onclick="nextWeek()">▶</button>
+  </div>
+  <div class="matrix-wrap">
+    <div class="matrix-scroll">
+      <table class="matrix" id="matrixTable"></table>
+    </div>
+  </div>
+  <div class="progress-section">
+    <div class="section-title">📊 이번 주 일별 달성률</div>
+    <div id="progressBars"></div>
+  </div>
+</main>
+
+<!-- ══ 모달들 ══ -->
+
+<!-- 루틴 추가/수정 -->
+<div class="overlay" id="routineModal" style="display:none;">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('routineModal')">✕</button>
+    <div class="modal-title" id="rModalTitle">루틴 추가</div>
+    <div class="modal-sub"  id="rModalSub">새 루틴을 추가하세요</div>
+    <div class="form-group">
+      <label class="form-label">아이콘</label>
+      <div class="icon-picker" id="iconPicker"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">루틴 이름</label>
+      <input class="form-input" id="rNameInput" placeholder="예: 양치하기, 독서 20분..." maxlength="20">
+    </div>
+    <div class="form-group">
+      <label class="form-label">시간대</label>
+      <select class="form-select" id="rTimeInput">
+        <option value="morning">🌅 아침</option>
+        <option value="afternoon">☀️ 오후</option>
+        <option value="evening">🌆 저녁</option>
+        <option value="night">🌙 취침 전</option>
+      </select>
+    </div>
+    <button class="btn-pri" id="rSaveBtn" onclick="saveRoutine()">➕ 추가하기</button>
+  </div>
+</div>
+
+<!-- 자녀 추가 -->
+<div class="overlay" id="addChildModal" style="display:none;">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('addChildModal')">✕</button>
+    <div class="modal-title">👶 자녀 추가</div>
+    <div class="modal-sub">새 자녀 프로필을 만들어 주세요</div>
+    <div class="form-group">
+      <label class="form-label">이름</label>
+      <input class="form-input" id="cNameInput" placeholder="예: 지수, 민준..." maxlength="10">
+    </div>
+    <div class="form-group">
+      <label class="form-label">아바타</label>
+      <div class="icon-picker" id="cAvatarPicker"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">테마 색상</label>
+      <div class="color-picker" id="cColorPicker"></div>
+    </div>
+    <button class="btn-pri" onclick="saveChild()">추가하기</button>
+  </div>
+</div>
+
+<!-- 자녀 수정 -->
+<div class="overlay" id="editChildModal" style="display:none;">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('editChildModal')">✕</button>
+    <div class="modal-title">✏️ 자녀 정보 수정</div>
+    <div class="modal-sub">이름, 아바타, 색상을 바꿀 수 있어요</div>
+    <div class="form-group">
+      <label class="form-label">이름</label>
+      <input class="form-input" id="ecNameInput" placeholder="이름 입력..." maxlength="10">
+    </div>
+    <div class="form-group">
+      <label class="form-label">아바타</label>
+      <div class="icon-picker" id="ecAvatarPicker"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">테마 색상</label>
+      <div class="color-picker" id="ecColorPicker"></div>
+    </div>
+    <button class="btn-pri" onclick="saveEditChild()">💾 저장하기</button>
+    <button class="btn-sec" id="deleteChildBtn" onclick="deleteChild()">🗑 이 자녀 삭제</button>
+  </div>
+</div>
+
+<!-- 사다리 타기 -->
+<div class="overlay" id="ladderModal" style="display:none;">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-x" onclick="closeModal('ladderModal')">✕</button>
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:38px;line-height:1;margin-bottom:5px;">🎰</div>
+      <div style="font-size:18px;font-weight:900;color:var(--pri);">사다리 타기 보상!</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="ladderSub"></div>
+    </div>
+    <div id="ladderStep1">
+      <div class="ldr-step-lbl">① 출발 위치를 선택하세요</div>
+      <div class="slot-row" id="slotRow"></div>
+      <div class="ldr-hint">원하는 칸을 눌러 위치를 정하세요 👆</div>
+      <button class="ldr-cfm" id="ladderConfirmBtn" onclick="confirmSlot()">✅ 이 위치로 시작!</button>
+    </div>
+    <div id="ladderStep2" style="display:none;">
+      <div class="ldr-step-lbl">② 사다리를 타고 내려가 보세요!</div>
+      <div class="svg-wrap">
+        <div class="ldr-top" id="ladderTopRow"></div>
+        <svg id="ladderSVG" height="160" style="display:block;width:100%;"></svg>
+        <div class="ldr-bot" id="ladderBotRow"></div>
+      </div>
+      <div class="ldr-result" id="ladderResult">
+        <div class="lr-emoji" id="lrEmoji"></div>
+        <div class="lr-text"  id="lrText"></div>
+        <div class="lr-sub"   id="lrSub"></div>
+      </div>
+      <button class="ldr-start" id="ladderStartBtn" onclick="startLadder()">🎲 사다리 출발!</button>
+    </div>
+  </div>
+</div>
+
+<!-- 루틴왕 — 별도 overlay 클래스 -->
+<div class="king-overlay" id="kingModal" style="display:none;">
+  <div class="king-modal">
+    <div id="confettiBox" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+    <div class="king-crown">👑</div>
+    <div class="king-title">이달의 루틴왕!</div>
+    <div class="king-month" id="kingMonth"></div>
+    <div class="king-av"    id="kingAv"></div>
+    <div class="king-name"  id="kingName"></div>
+    <div class="king-score" id="kingScore"></div>
+    <div class="king-slabel">번 루틴 완료 🎉</div>
+    <div class="king-stars">⭐⭐⭐⭐⭐</div>
+    <button class="king-close" onclick="closeKing()">🎊 축하해요! 닫기</button>
+  </div>
+</div>
+
+<!-- 독서 질문 -->
+<div class="overlay" id="readingQModal" style="display:none;">
+  <div class="modal" style="max-width:400px;">
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:40px;line-height:1;margin-bottom:8px;">📖</div>
+      <div class="modal-title">책에서 배운 점이 있나요?</div>
+      <div class="modal-sub" id="rqSubtext" style="margin-bottom:0;"></div>
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <textarea class="form-input" id="rqMemoInput" rows="4"
+        placeholder="예: 포기하지 않으면 결국 이룰 수 있다는 걸 배웠어요 📚"></textarea>
+    </div>
+    <button class="btn-pri" onclick="saveReadingMemo()">✍️ 기록하기</button>
+    <button class="btn-sec neutral" onclick="closeModal('readingQModal')">다음에 쓸게요</button>
+  </div>
+</div>
+
+<!-- 독서 로그 -->
+<div class="overlay" id="readingLogModal" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-x" onclick="closeModal('readingLogModal')">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:24px;">📚</span>
+      <div>
+        <div class="modal-title" style="margin-bottom:1px;">독서 배움 로그</div>
+        <div style="font-size:11px;color:var(--muted);">책을 읽으며 기록한 배움들이에요</div>
+      </div>
+    </div>
+    <div class="log-tabs" id="logTabs"></div>
+    <div class="log-list"  id="logList"></div>
+  </div>
+</div>
+
+<script>
+// ════════ 상수 ════════
+const REWARDS=[{icon:'🏪',name:'다이소\n2,000원권'},{icon:'🏪',name:'편의점\n2,000원권'},{icon:'🍦',name:'아이스크림\n1개'},{icon:'📚',name:'도서\n구입권'},{icon:'📱',name:'패드\n30분'},{icon:'🎬',name:'영화\n1편'}];
+const ROUTINE_ICONS=['🦷','📖','✏️','🏃','🛁','🍎','💊','🧹','🐶','😴','🎸','🖥️','🧘','💪','🎨','🎯'];
+const CHILD_AVATARS=['👦','👧','🧒','🐱','🐶','🦊','🐼','🐨','🐸','🦁','🐯','🐰'];
+const CHILD_COLORS=['#6C63FF','#FF6B9D','#22C55E','#F59E0B','#3B82F6','#EF4444','#8B5CF6','#14B8A6'];
+const DN=['일','월','화','수','목','금','토'];
+
+// ════════ 상태 ════════
+function defaultState(){return{routines:[{id:'r1',icon:'🦷',name:'양치하기',time:'morning'},{id:'r2',icon:'📖',name:'독서 20분',time:'evening'},{id:'r3',icon:'✏️',name:'숙제하기',time:'afternoon'},{id:'r4',icon:'😴',name:'일찍 자기',time:'night'}],children:[{id:'c1',name:'지수',avatar:'👧',color:'#6C63FF',checks:{},ladderUsed:{}}],kingShown:{},readingLogs:[]};}
+function loadState(){
+  try{
+    // 우선 rk3 키 시도
+    let s=JSON.parse(localStorage.getItem('rk3')||'null');
+
+    // rk3 없으면 구버전(rk_state) 마이그레이션
+    if(!s){
+      const old=localStorage.getItem('rk_state');
+      if(old){
+        try{
+          const os=JSON.parse(old);
+          s={
+            routines: os.routines || defaultState().routines,
+            children: (os.children||[]).map(c=>({
+              id:c.id||('c'+Date.now()),
+              name:c.name||'아이',
+              avatar:c.avatar||'👧',
+              color:c.color||'#6C63FF',
+              checks:c.checks||{},
+              ladderUsed:c.ladderUsed||{}
+            })),
+            kingShown:os.kingShown||{},
+            readingLogs:os.readingLogs||[]
+          };
+          if(!s.children.length) s.children=defaultState().children;
+        }catch(e){ return defaultState(); }
+      } else {
+        return defaultState();
+      }
+    }
+
+    // 필드 보정 (어떤 버전이든 안전하게)
+    if(!s.routines||!s.routines.length) s.routines=defaultState().routines;
+    if(!s.children||!s.children.length) s.children=defaultState().children;
+    if(!s.readingLogs) s.readingLogs=[];
+    if(!s.kingShown)   s.kingShown={};
+    s.children.forEach(c=>{
+      if(!c.checks)     c.checks={};
+      if(!c.ladderUsed) c.ladderUsed={};
+      if(!c.id)         c.id='c'+Date.now();
+      if(!c.name)       c.name='아이';
+      if(!c.avatar)     c.avatar='👧';
+      if(!c.color)      c.color='#6C63FF';
+    });
+    return s;
+  }catch(e){ return defaultState(); }
+}
+function saveState(){localStorage.setItem('rk3',JSON.stringify(state));}
+
+let state=loadState();
+let curChildIdx=0,weekStart=getWeekStart(new Date()),selIcon=ROUTINE_ICONS[0],selAvatar=CHILD_AVATARS[0],selColor=CHILD_COLORS[0],editChildIdx=-1,editRoutineId=null,rqCtx={child:null,dateKey:''},logFilterId='all';
+
+// ════════ 날짜 유틸 ════════
+function getWeekStart(d){const dt=new Date(d);dt.setHours(0,0,0,0);const day=dt.getDay();dt.setDate(dt.getDate()-(day===0?6:day-1));return dt;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function toKey(d){return d.toISOString().slice(0,10);}
+function today(){return new Date();}
+function isToday(d){return toKey(d)===toKey(today());}
+function isFuture(d){const t=new Date(today());t.setHours(0,0,0,0);const x=new Date(d);x.setHours(0,0,0,0);return x>t;}
+function fmtWeek(s){const e=addDays(s,6),y=s.getFullYear(),sm=s.getMonth()+1,sd=s.getDate(),em=e.getMonth()+1,ed=e.getDate();return sm===em?`${y}년 ${sm}월 ${sd}~${ed}일`:`${y}년 ${sm}월 ${sd}일 ~ ${em}월 ${ed}일`;}
+function curChild(){return state.children[curChildIdx];}
+function allR(){return state.routines;}
+
+// ════════ 렌더 ════════
+function render(){
+  try{
+    renderTabs();renderSummary();renderStreaks();
+    renderWeekLabel();renderMatrix();renderProgress();
+    checkKingOnLoad();
+  }catch(e){
+    console.error('render error:',e);
+    // 상태 초기화 후 재시도
+    state=defaultState();
+    saveState();
+    renderTabs();renderSummary();renderStreaks();
+    renderWeekLabel();renderMatrix();renderProgress();
+  }
+}
+
+function renderTabs(){
+  const ct=document.getElementById('childTabs');ct.innerHTML='';
+  state.children.forEach((c,i)=>{
+    const w=document.createElement('div');w.className='ctab-wrap';
+    const b=document.createElement('button');b.className='ctab'+(i===curChildIdx?' active':'');
+    if(i===curChildIdx){b.style.background=c.color;b.style.borderColor=c.color;b.style.borderTopRightRadius='0';b.style.borderBottomRightRadius='0';b.style.borderRight='none';}
+    b.innerHTML=`<span class="ctab-av" style="background:${c.color}25">${c.avatar}</span>${c.name}`;
+    b.onclick=()=>{curChildIdx=i;render();};w.appendChild(b);
+    if(i===curChildIdx){const eb=document.createElement('button');eb.className='ctab-edit';eb.style.cssText=`border-color:${c.color};color:${c.color};`;eb.textContent='✏️';eb.onclick=(e)=>{e.stopPropagation();openEditChild(i);};w.appendChild(eb);}
+    ct.appendChild(w);
+  });
+  const ab=document.createElement('button');ab.className='add-child-btn';ab.textContent='+ 자녀 추가';ab.onclick=openAddChild;ct.appendChild(ab);
+}
+
+function renderSummary(){
+  const child=curChild(),r=allR(),n=r.length,tk=toKey(today());
+  const td=r.filter(x=>child.checks[`${tk}_${x.id}`]).length;
+  let wd=0,wt=0;
+  for(let i=0;i<7;i++){const d=addDays(weekStart,i);if(isFuture(d))break;const k=toKey(d);r.forEach(x=>{wt++;if(child.checks[`${k}_${x.id}`])wd++;});}
+  const nm=today().getMonth(),ny=today().getFullYear();
+  let md=0;Object.keys(child.checks).forEach(k=>{if(child.checks[k]){const d=new Date(k.split('_')[0]);if(d.getMonth()===nm&&d.getFullYear()===ny)md++;}});
+  document.getElementById('summaryRow').innerHTML=`
+    <div class="summary-card"><div class="summary-num">${n>0?Math.round(td/n*100):0}%</div><div class="summary-label">오늘 달성률</div></div>
+    <div class="summary-card"><div class="summary-num">${td}/${n}</div><div class="summary-label">오늘 완료</div></div>
+    <div class="summary-card"><div class="summary-num">${wt>0?Math.round(wd/wt*100):0}%</div><div class="summary-label">이번 주</div></div>
+    <div class="summary-card"><div class="summary-num">${md}</div><div class="summary-label">이번 달</div></div>`;
+}
+
+function renderStreaks(){
+  const child=curChild(),area=document.getElementById('streakArea');area.innerHTML='';let any=false;
+  allR().forEach(r=>{const s=calcStreak(child,r.id);if(s>=3){any=true;const b=document.createElement('div');b.className='streak-badge '+(s>=10?'spark':'fire');b.innerHTML=`${s>=10?'⚡':'🔥'} ${r.icon} ${r.name} <strong>${s}일 연속</strong>`;area.appendChild(b);}});
+  if(!any)area.innerHTML='<div class="streak-badge hint">🔒 5일 연속 달성 시 사다리 타기 보상!</div>';
+}
+
+function calcStreak(child,rid){let cnt=0,d=new Date(today());while(child.checks[`${toKey(d)}_${rid}`]){cnt++;d.setDate(d.getDate()-1);}return cnt;}
+function renderWeekLabel(){document.getElementById('weekLabel').textContent=fmtWeek(weekStart);}
+
+function renderMatrix(){
+  const child=curChild(),days=Array.from({length:7},(_,i)=>addDays(weekStart,i)),r=allR();
+  let html=`<colgroup><col><col span="7"></colgroup><thead><tr><th class="r-col">공통 루틴 📋</th>`;
+  days.forEach(d=>{
+    const dn=d.getDay(),nc=isToday(d)?' is-today':dn===0?' is-sun':dn===6?' is-sat':'',dc=dn===0?'#EF4444':dn===6?'#3B82F6':'var(--muted)';
+    html+=`<th><div class="day-hd"><span class="day-nm" style="color:${dc}">${DN[dn]}</span><span class="day-num${nc}">${d.getDate()}</span></div></th>`;
+  });
+  html+='</tr></thead><tbody>';
+  r.forEach(rt=>{
+    const tc={morning:'t-morning',afternoon:'t-afternoon',evening:'t-evening',night:'t-night'}[rt.time];
+    const tt={morning:'아침',afternoon:'오후',evening:'저녁',night:'취침전'}[rt.time];
+    html+=`<tr><td class="r-name-cell"><div class="r-label"><span class="r-icon">${rt.icon}</span><div class="r-info"><div class="r-name">${rt.name}</div><span class="r-time ${tc}">${tt}</span></div><div class="r-actions"><button class="r-act-btn edit" onclick="openEditRoutine('${rt.id}')" title="수정">편집</button><button class="r-act-btn del" onclick="deleteRoutine('${rt.id}')" title="삭제">삭제</button></div></div></td>`;
+    days.forEach(d=>{
+      const k=`${toKey(d)}_${rt.id}`,done=!!child.checks[k],fut=isFuture(d);
+      html+=`<td><button class="check-cell${done?' done':''}" ${fut?'disabled':''} ${!fut?`onclick="toggleCheck('${toKey(d)}','${rt.id}')"`:''} >${done?'✓':''}</button></td>`;
+    });
+    html+='</tr>';
+  });
+  html+=`<tr class="add-r-row"><td colspan="${days.length+1}"><button class="add-r-btn" onclick="openAddRoutine()"><span style="font-size:15px">＋</span> 루틴 추가</button></td></tr></tbody>`;
+  document.getElementById('matrixTable').innerHTML=html;
+}
+
+function renderProgress(){
+  const child=curChild(),r=allR(),n=r.length;
+  document.getElementById('progressBars').innerHTML=Array.from({length:7},(_,i)=>addDays(weekStart,i)).map(d=>{
+    if(isFuture(d)||n===0)return`<div class="prog-row"><span class="prog-day">${DN[d.getDay()]}</span><div class="prog-track"><div class="prog-fill" style="width:0;background:#E5E7EB;"></div></div><span class="prog-pct" style="color:#D1D5DB">-</span></div>`;
+    const k=toKey(d),done=r.filter(x=>child.checks[`${k}_${x.id}`]).length,pct=Math.round(done/n*100),col=pct>=80?'#22C55E':pct>=50?'#F59E0B':'#EF4444';
+    return`<div class="prog-row"><span class="prog-day" style="${isToday(d)?'color:var(--pri);font-weight:700':''}">${DN[d.getDay()]}</span><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${col};"></div></div><span class="prog-pct" style="color:${col}">${pct}%</span></div>`;
+  }).join('');
+}
+
+// ════════ 체크 ════════
+function toggleCheck(dateKey,routineId){
+  const child=curChild(),k=`${dateKey}_${routineId}`,was=!!child.checks[k];
+  child.checks[k]=!was;saveState();
+  if(!was){const rt=allR().find(r=>r.id===routineId);const isRead=rt&&(rt.name.includes('독서')||rt.name.includes('읽'));if(isRead&&Math.random()<0.2){setTimeout(()=>openReadingQuestion(child,dateKey),350);}else{checkStreakReward(child,routineId);}}
+  render();
+}
+function checkStreakReward(child,routineId){
+  const s=calcStreak(child,routineId),mk=`${today().getFullYear()}-${String(today().getMonth()+1).padStart(2,'0')}`;
+  if(child.ladderUsed[mk])return;
+  if(s===5||s===10){const rt=allR().find(r=>r.id===routineId);setTimeout(()=>openLadder(s,rt?rt.name:''),400);}
+}
+
+// ════════ 사다리 ════════
+let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0};
+function openLadder(streak,routineName){
+  LDR.streak=streak||0;LDR.userSlot=-1;LDR.running=false;LDR.numCols=5;LDR.userChild=curChild();
+  LDR.rewards=[...REWARDS].sort(()=>Math.random()-.5).slice(0,5);
+  document.getElementById('ladderSub').textContent=streak?`🔥 ${streak}일 연속! ${routineName} 보상을 받으세요`:'사다리 타기를 즐겨보세요!';
+  renderSlots();
+  document.getElementById('ladderStep1').style.display='block';
+  document.getElementById('ladderStep2').style.display='none';
+  document.getElementById('ladderResult').classList.remove('show');
+  document.getElementById('ladderModal').style.display='flex';
+}
+function renderSlots(){
+  const c=LDR.userChild,n=LDR.numCols;
+  document.getElementById('slotRow').innerHTML=Array.from({length:n},(_,i)=>{const tk=LDR.userSlot===i;return`<div class="slot-item${tk?' taken':''}" onclick="selectSlot(${i})"><div class="slot-box">${tk?`${c.avatar}<span class="slot-badge">${i+1}</span>`:`<span class="slot-num">${i+1}</span>`}</div><div class="slot-name">${tk?c.name:`${i+1}번`}</div></div>`;}).join('');
+  const cb=document.getElementById('ladderConfirmBtn');cb.className='ldr-cfm'+(LDR.userSlot>=0?' show':'');
+}
+function selectSlot(i){LDR.userSlot=i;renderSlots();}
+function confirmSlot(){
+  if(LDR.userSlot<0)return;
+  document.getElementById('ladderStep1').style.display='none';
+  document.getElementById('ladderStep2').style.display='block';
+  buildLadder();drawLdrUI();
+  const btn=document.getElementById('ladderStartBtn');btn.disabled=false;btn.textContent='🎲 사다리 출발!';
+}
+function buildLadder(){
+  const n=LDR.numCols,W=LDR.W,H=LDR.H,pad=24,span=W-pad*2;
+  LDR.xPos=Array.from({length:n},(_,i)=>Math.round(pad+span*i/(n-1)));
+  LDR.rungs=[];const lv=8+Math.floor(Math.random()*5),yT=18,yB=H-18,yS=(yB-yT)/(lv+1);
+  for(let l=1;l<=lv;l++){const y=Math.round(yT+yS*l),used=new Set();for(let ci=0;ci<n-1;ci++){if(!used.has(ci)&&!used.has(ci+1)&&Math.random()>0.42){LDR.rungs.push({y,from:ci,to:ci+1});used.add(ci);used.add(ci+1);}}}
+}
+function drawLdrUI(){
+  const{xPos,rewards,rungs,H,W,numCols,userSlot,userChild}=LDR;
+  document.getElementById('ladderTopRow').innerHTML=Array.from({length:numCols},(_,i)=>{const iu=i===userSlot;return`<div class="ltc${iu?' isu':''}" style="flex:1"><div class="ltc-av" style="${iu?`border-color:${userChild.color};background:${userChild.color}18`:''}">${iu?userChild.avatar:'❓'}</div><div class="ltc-nm">${iu?userChild.name:'?'}</div></div>`;}).join('');
+  document.getElementById('ladderBotRow').innerHTML=rewards.map((_,i)=>`<div class="lbc" style="flex:1"><div class="rb" id="rb${i}"><span class="ri">🎁</span><span class="rn">?</span></div></div>`).join('');
+  const svg=document.getElementById('ladderSVG');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('height',H);
+  let h='';xPos.forEach((x,i)=>{h+=`<line x1="${x}" y1="18" x2="${x}" y2="${H-18}" stroke="${i===userSlot?'#6C63FF':'#D1D5DB'}" stroke-width="${i===userSlot?3:2}" stroke-linecap="round"/>`;});
+  rungs.forEach(r=>{h+=`<line x1="${xPos[r.from]}" y1="${r.y}" x2="${xPos[r.to]}" y2="${r.y}" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>`;});
+  svg.innerHTML=h;
+}
+function startLadder(){
+  if(LDR.running)return;LDR.running=true;
+  const btn=document.getElementById('ladderStartBtn');btn.disabled=true;btn.textContent='⏳ 내려가는 중...';
+  const{xPos,rungs,H,userSlot,rewards,userChild}=LDR;
+  const yLevels=[...new Set(rungs.map(r=>r.y))].sort((a,b)=>a-b);
+  let pos=userSlot;yLevels.forEach(y=>{const rg=rungs.find(r=>r.y===y&&(r.from===pos||r.to===pos));if(rg)pos=rg.from===pos?rg.to:rg.from;});
+  animPath(userSlot,yLevels,()=>{
+    revealRewards(pos,rewards[pos]);btn.textContent='🎊 완료!';
+    const mk=`${today().getFullYear()}-${String(today().getMonth()+1).padStart(2,'0')}`;
+    setTimeout(()=>{const rw=rewards[pos];document.getElementById('lrEmoji').textContent=rw.icon+' 🎉';document.getElementById('lrText').textContent=`${userChild.name}이(가) "${rw.name.replace('\n',' ')}" 당첨!`;document.getElementById('lrSub').textContent='축하해요! 보호자에게 보여주세요 🥳';document.getElementById('ladderResult').classList.add('show');userChild.ladderUsed[mk]=true;saveState();},400);
+  });
+}
+function animPath(startCol,yLevels,onDone){
+  const{xPos,rungs,H}=LDR,svg=document.getElementById('ladderSVG');
+  svg.querySelectorAll('.lb').forEach(e=>e.remove());
+  const ball=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  ball.setAttribute('class','lb');ball.setAttribute('r','6');ball.setAttribute('fill','#6C63FF');ball.setAttribute('stroke','white');ball.setAttribute('stroke-width','2');ball.setAttribute('cx',xPos[startCol]);ball.setAttribute('cy','18');svg.appendChild(ball);
+  let pos=startCol,step=0;
+  function move(){if(step>=yLevels.length){animMove(ball,xPos[pos],H-18,160,onDone);return;}const y=yLevels[step],rg=rungs.find(r=>r.y===y&&(r.from===pos||r.to===pos));animMove(ball,xPos[pos],y,160,()=>{if(rg){const np=rg.from===pos?rg.to:rg.from;animMove(ball,xPos[np],y,160,()=>{pos=np;step++;move();});}else{step++;move();}});}
+  move();
+}
+function animMove(el,tx,ty,ms,cb){const fx=parseFloat(el.getAttribute('cx')),fy=parseFloat(el.getAttribute('cy')),s=performance.now();function fr(now){const t=Math.min((now-s)/ms,1),e=t<.5?2*t*t:-1+(4-2*t)*t;el.setAttribute('cx',fx+(tx-fx)*e);el.setAttribute('cy',fy+(ty-fy)*e);if(t<1)requestAnimationFrame(fr);else{el.setAttribute('cx',tx);el.setAttribute('cy',ty);cb&&cb();}}requestAnimationFrame(fr);}
+function revealRewards(winCol,winReward){LDR.rewards.forEach((r,i)=>{const b=document.getElementById(`rb${i}`);if(!b)return;setTimeout(()=>{b.querySelector('.ri').textContent=r.icon;b.querySelector('.rn').textContent=r.name.replace('\n',' ');if(i===winCol)b.classList.add('win');},i*120);});}
+
+// ════════ 루틴왕 ════════
+function checkKingOnLoad(){
+  const now=today(),isFirst=now.getDate()===1;
+  const pm=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const pk=`${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
+  if(isFirst&&!state.kingShown[pk]&&state.children.length>0)showKing(pm,pk);
+}
+function checkKingManual(){const now=today(),tm=new Date(now.getFullYear(),now.getMonth(),1);showKing(tm,`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);}
+function showKing(targetMonth,mk){
+  const scores=state.children.map(c=>{let cnt=0;const tm=targetMonth.getMonth(),ty=targetMonth.getFullYear();Object.keys(c.checks).forEach(k=>{if(c.checks[k]){const d=new Date(k.split('_')[0]);if(d.getMonth()===tm&&d.getFullYear()===ty)cnt++;}});return{c,cnt};});
+  const best=scores.sort((a,b)=>b.cnt-a.cnt)[0];
+  if(!best||best.cnt===0){alert('아직 이번 달 루틴 기록이 없어요! 루틴을 완료해보세요 😊');return;}
+  document.getElementById('kingMonth').textContent=`${targetMonth.getFullYear()}년 ${targetMonth.getMonth()+1}월 루틴왕 🏆`;
+  const av=document.getElementById('kingAv');av.textContent=best.c.avatar;av.style.background=best.c.color+'30';
+  document.getElementById('kingName').textContent=best.c.name;document.getElementById('kingScore').textContent=best.cnt;
+  spawnConfetti();state.kingShown[mk]=true;saveState();
+  document.getElementById('kingModal').style.display='flex';
+}
+function closeKing(){document.getElementById('kingModal').style.display='none';}
+function spawnConfetti(){const box=document.getElementById('confettiBox');box.innerHTML='';const cols=['#6C63FF','#FF6B9D','#FDE68A','#22C55E','#3B82F6','#F59E0B'];for(let i=0;i<36;i++){const p=document.createElement('div');p.className='cfp';p.style.cssText=`left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*1.5}s;animation-delay:${Math.random()*.8}s;`;box.appendChild(p);}}
+
+// ════════ 독서 ════════
+function openReadingQuestion(child,dateKey){rqCtx={child,dateKey};document.getElementById('rqSubtext').textContent=`${child.name}! 오늘 읽은 책에서 배운 점을 적어봐요 ✨`;document.getElementById('rqMemoInput').value='';document.getElementById('readingQModal').style.display='flex';setTimeout(()=>document.getElementById('rqMemoInput').focus(),120);}
+function saveReadingMemo(){const memo=document.getElementById('rqMemoInput').value.trim();if(!memo){alert('내용을 입력해주세요 😊');return;}const{child,dateKey}=rqCtx;state.readingLogs.unshift({id:'log'+Date.now(),childId:child.id,childName:child.name,childAvatar:child.avatar,childColor:child.color,date:dateKey,memo});saveState();closeModal('readingQModal');const rt=allR().find(r=>r.name.includes('독서')||r.name.includes('읽'));if(rt)checkStreakReward(child,rt.id);}
+function openReadingLog(){logFilterId='all';renderLogTabs();renderLogList();document.getElementById('readingLogModal').style.display='flex';}
+function renderLogTabs(){document.getElementById('logTabs').innerHTML=[{id:'all',label:'전체'},...state.children.map(c=>({id:c.id,label:c.avatar+' '+c.name}))].map(t=>`<button class="log-tab${logFilterId===t.id?' active':''}" onclick="setLogFilter('${t.id}')">${t.label}</button>`).join('');}
+function setLogFilter(id){logFilterId=id;renderLogTabs();renderLogList();}
+function renderLogList(){
+  const logs=(state.readingLogs||[]).filter(l=>logFilterId==='all'||l.childId===logFilterId);
+  if(!logs.length){document.getElementById('logList').innerHTML='<div class="log-empty"><div class="ei">📭</div>아직 기록된 배움이 없어요.<br>독서 루틴 체크 시 20% 확률로 팝업이 떠요!</div>';return;}
+  document.getElementById('logList').innerHTML=logs.map(l=>{const d=new Date(l.date);const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;return`<div class="log-item"><div class="log-meta"><div class="log-av" style="background:${l.childColor}20">${l.childAvatar}</div><span class="log-child" style="color:${l.childColor}">${l.childName}</span><span class="log-date">📅 ${ds}</span></div><div class="log-text">"${l.memo}"</div><button class="log-del" onclick="delLog('${l.id}')">✕</button></div>`;}).join('');
+}
+function delLog(id){if(!confirm('이 기록을 삭제할까요?'))return;state.readingLogs=state.readingLogs.filter(l=>l.id!==id);saveState();renderLogList();}
+
+// ════════ 루틴 추가/수정/삭제 ════════
+function openAddRoutine(){editRoutineId=null;selIcon=ROUTINE_ICONS[0];document.getElementById('rModalTitle').textContent='✏️ 루틴 추가';document.getElementById('rModalSub').textContent='새 루틴을 추가하세요';document.getElementById('rSaveBtn').textContent='➕ 추가하기';document.getElementById('rNameInput').value='';document.getElementById('rTimeInput').value='morning';renderIconPicker('iconPicker',selIcon,'ri');document.getElementById('routineModal').style.display='flex';}
+function openEditRoutine(rid){const rt=state.routines.find(r=>r.id===rid);if(!rt)return;editRoutineId=rid;selIcon=rt.icon;document.getElementById('rModalTitle').textContent='✏️ 루틴 수정';document.getElementById('rModalSub').textContent='루틴 내용을 변경하세요';document.getElementById('rSaveBtn').textContent='💾 저장하기';document.getElementById('rNameInput').value=rt.name;document.getElementById('rTimeInput').value=rt.time;renderIconPicker('iconPicker',selIcon,'ri');document.getElementById('routineModal').style.display='flex';}
+function saveRoutine(){const name=document.getElementById('rNameInput').value.trim();if(!name){alert('루틴 이름을 입력하세요');return;}const time=document.getElementById('rTimeInput').value;if(editRoutineId){const rt=state.routines.find(r=>r.id===editRoutineId);if(rt){rt.icon=selIcon;rt.name=name;rt.time=time;}}else{state.routines.push({id:'r'+Date.now(),icon:selIcon,name,time});}saveState();closeModal('routineModal');render();}
+function deleteRoutine(rid){if(!confirm('이 루틴을 삭제할까요?\n모든 자녀의 체크 기록도 삭제됩니다.'))return;state.routines=state.routines.filter(r=>r.id!==rid);state.children.forEach(c=>{Object.keys(c.checks).forEach(k=>{if(k.includes(rid))delete c.checks[k];});});saveState();render();}
+
+// ════════ 자녀 추가/수정/삭제 ════════
+function openAddChild(){selAvatar=CHILD_AVATARS[0];selColor=CHILD_COLORS[0];document.getElementById('cNameInput').value='';renderIconPicker('cAvatarPicker',selAvatar,'ca');renderColorPicker('cColorPicker',selColor,'cc');document.getElementById('addChildModal').style.display='flex';}
+function saveChild(){const name=document.getElementById('cNameInput').value.trim();if(!name){alert('이름을 입력하세요');return;}state.children.push({id:'c'+Date.now(),name,avatar:selAvatar,color:selColor,checks:{},ladderUsed:{}});curChildIdx=state.children.length-1;saveState();closeModal('addChildModal');render();}
+function openEditChild(idx){editChildIdx=idx;const c=state.children[idx];selAvatar=c.avatar;selColor=c.color;document.getElementById('ecNameInput').value=c.name;renderIconPicker('ecAvatarPicker',selAvatar,'ea');renderColorPicker('ecColorPicker',selColor,'ec');const db=document.getElementById('deleteChildBtn');db.disabled=state.children.length<=1;db.style.opacity=state.children.length<=1?'.4':'1';document.getElementById('editChildModal').style.display='flex';}
+function saveEditChild(){const name=document.getElementById('ecNameInput').value.trim();if(!name){alert('이름을 입력하세요');return;}const c=state.children[editChildIdx];c.name=name;c.avatar=selAvatar;c.color=selColor;saveState();closeModal('editChildModal');render();}
+function deleteChild(){if(state.children.length<=1){alert('자녀가 1명일 때는 삭제할 수 없어요.');return;}const c=state.children[editChildIdx];if(!confirm(`${c.name}을(를) 삭제할까요?\n체크 기록도 모두 삭제됩니다.`))return;state.children.splice(editChildIdx,1);if(curChildIdx>=state.children.length)curChildIdx=state.children.length-1;saveState();closeModal('editChildModal');render();}
+
+// ════════ 피커 ════════
+function renderIconPicker(id,cur,tag){const src=id.includes('Avatar')||id.startsWith('ca')||id.startsWith('ea')?CHILD_AVATARS:ROUTINE_ICONS;document.getElementById(id).innerHTML=src.map(ic=>`<button class="icon-opt${ic===cur?' sel':''}" onclick="pickIcon('${ic}','${id}','${tag}')">${ic}</button>`).join('');}
+function pickIcon(ic,id,tag){if(tag==='ri')selIcon=ic;else selAvatar=ic;document.querySelectorAll(`#${id} .icon-opt`).forEach(b=>b.classList.toggle('sel',b.textContent===ic));}
+function renderColorPicker(id,cur,tag){document.getElementById(id).innerHTML=CHILD_COLORS.map(c=>`<div class="color-dot${c===cur?' sel':''}" style="background:${c}" onclick="pickColor('${c}','${id}','${tag}')"></div>`).join('');}
+function pickColor(c,id,tag){selColor=c;document.querySelectorAll(`#${id} .color-dot`).forEach(d=>d.classList.toggle('sel',d.style.background===c||d.style.backgroundColor===c||`rgb(${parseInt(c.slice(1,3),16)}, ${parseInt(c.slice(3,5),16)}, ${parseInt(c.slice(5,7),16)})`===d.style.backgroundColor));}
+
+// ════════ 주 이동 ════════
+function prevWeek(){weekStart=addDays(weekStart,-7);render();}
+function nextWeek(){weekStart=addDays(weekStart,7);render();}
+function goToday(){weekStart=getWeekStart(new Date());render();}
+
+// ════════ 모달 닫기 ════════
+function closeModal(id){document.getElementById(id).style.display='none';}
+document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.style.display='none';});});
+document.getElementById('kingModal').addEventListener('click',e=>{if(e.target===document.getElementById('kingModal'))closeKing();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.style.display='none');closeKing();}});
+
+// ════════ 모바일 스와이프 닫기 ════════
+document.querySelectorAll('.overlay .modal').forEach(modal=>{
+  let sY=0,drag=false;
+  modal.addEventListener('touchstart',e=>{sY=e.touches[0].clientY;drag=true;},{passive:true});
+  modal.addEventListener('touchmove',e=>{if(!drag)return;const dy=e.touches[0].clientY-sY;if(dy>0)modal.style.transform=`translateY(${dy}px)`;},{passive:true});
+  modal.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-sY;modal.style.transition='transform .2s';modal.style.transform='';if(dy>90)modal.closest('.overlay').style.display='none';setTimeout(()=>modal.style.transition='',200);drag=false;});
+});
+
+// ════════ 시작 ════════
+render();
+
+// 데모 데이터
+(function seed(){
+  const c=state.children[0];if(Object.keys(c.checks).length>0)return;
+  const r=allR();if(!r.length)return;
+  for(let i=8;i>=1;i--){const d=addDays(today(),-i);c.checks[`${toKey(d)}_${r[0].id}`]=true;}
+  for(let i=0;i<=2;i++){const d=addDays(weekStart,i);if(!isFuture(d)){if(r[0])c.checks[`${toKey(d)}_${r[0].id}`]=true;if(r[1])c.checks[`${toKey(d)}_${r[1].id}`]=Math.random()>.3;if(r[2])c.checks[`${toKey(d)}_${r[2].id}`]=Math.random()>.4;}}
+  saveState();render();
+})();
+</script>
+</body>
+</html>

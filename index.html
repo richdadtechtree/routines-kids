@@ -241,22 +241,34 @@ table.matrix {
 .r-act-btn.del  { background: #FEE2E2; color: #DC2626; }
 
 /* 체크 버튼 */
+.check-btn {
+  width: 100%; height: 100%; min-height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  padding: 4px 2px; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-btn:disabled {
+  cursor: not-allowed;
+}
+
 .check-cell {
   width: 32px; height: 32px; border-radius: 8px;
   border: 2px solid var(--bdr); background: transparent;
-  cursor: pointer; font-size: 14px;
+  font-size: 14px;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto; transition: all .13s; font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
+  margin: 0 auto; transition: all .13s;
+  pointer-events: none; /* 터치가 부모 check-btn으로 자연스럽게 흘러가게 처리 */
 }
 .check-cell.done    { background: var(--ok); border-color: var(--ok); color: white; }
-.check-cell:disabled { opacity: .3; cursor: not-allowed; }
+.check-btn:disabled .check-cell { opacity: .3; }
 
 /* 터치 편의성 및 애니메이션 적용을 위한 check-td 스타일 */
 .matrix td.check-td {
-  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  vertical-align: middle;
 }
-.check-td:active .check-cell:not(:disabled) { transform: scale(.88); }
+.check-btn:active:not(:disabled) .check-cell { transform: scale(.88); }
 
 /* 루틴 추가 행 */
 .add-r-row td { padding: 10px 12px !important; border-bottom: none !important; }
@@ -528,7 +540,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
   /* hover 효과 (마우스) */
   .hbtn:hover     { background: var(--pri-l); border-color: var(--pri); }
   .wnav-btn:hover { background: var(--pri-l); border-color: var(--pri); }
-  .check-td:hover .check-cell:not(:disabled) { border-color: var(--ok); background: #F0FDF4; }
+  .check-btn:hover:not(:disabled) .check-cell { border-color: var(--ok); background: #F0FDF4; }
   .r-act-btn.edit:hover { background: #C7D2FE; }
   .r-act-btn.del:hover  { background: #FECACA; }
   .btn-pri:hover  { background: #5B54E8; }
@@ -875,7 +887,7 @@ function renderMatrix(){
     html+=`<tr><td class="r-name-cell"><div class="r-label"><span class="r-icon">${rt.icon}</span><div class="r-info"><div class="r-name">${rt.name}</div><span class="r-time ${tc}">${tt}</span></div><div class="r-actions"><button class="r-act-btn edit" onclick="openEditRoutine('${rt.id}')" title="수정">편집</button><button class="r-act-btn del" onclick="deleteRoutine('${rt.id}')" title="삭제">삭제</button></div></div></td>`;
     days.forEach(d=>{
       const k=`${toKey(d)}_${rt.id}`,done=!!child.checks[k],fut=isFuture(d);
-      html+=`<td class="${!fut?'check-td':''}"${!fut?` onclick="toggleCheck('${toKey(d)}','${rt.id}')"`:''}><button class="check-cell${done?' done':''}" ${fut?'disabled':''} style="pointer-events: none;">${done?'✓':''}</button></td>`;
+      html+=`<td class="check-td"><button class="check-btn" ${fut?'disabled':''} ${!fut?`onclick="toggleCheck('${toKey(d)}','${rt.id}')"`:''}><span class="check-cell${done?' done':''}">${done?'✓':''}</span></button></td>`;
     });
     html+='</tr>';
   });

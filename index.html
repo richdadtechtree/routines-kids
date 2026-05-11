@@ -242,22 +242,25 @@ table.matrix {
 
 /* 체크 버튼 */
 .check-btn {
-  width: 100%; height: 100%; min-height: 40px;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; cursor: pointer;
-  padding: 4px 2px; font-family: inherit;
+  padding: 0; font-family: inherit;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .check-btn:disabled {
   cursor: not-allowed;
 }
 
 .check-cell {
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: 8px;
   border: 2px solid var(--bdr); background: transparent;
-  font-size: 14px;
+  font-size: 15px;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto; transition: all .13s;
+  margin: auto; transition: all .13s;
   pointer-events: none; /* 터치가 부모 check-btn으로 자연스럽게 흘러가게 처리 */
 }
 .check-cell.done    { background: var(--ok); border-color: var(--ok); color: white; }
@@ -267,8 +270,10 @@ table.matrix {
 .matrix td.check-td {
   padding: 0;
   vertical-align: middle;
+  position: relative;
+  height: 52px; /* 셀의 최소 높이를 확보하여 더 시원하고 정확하게 터치되도록 함 */
 }
-.check-btn:active:not(:disabled) .check-cell { transform: scale(.88); }
+.check-btn:active:not(:disabled) .check-cell { transform: scale(.84); }
 
 /* 루틴 추가 행 */
 .add-r-row td { padding: 10px 12px !important; border-bottom: none !important; }
@@ -757,6 +762,33 @@ const DN=['일','월','화','수','목','금','토'];
 
 // ════════ 상태 ════════
 function defaultState(){return{routines:[{id:'r1',icon:'🦷',name:'양치하기',time:'morning'},{id:'r2',icon:'📖',name:'독서 20분',time:'evening'},{id:'r3',icon:'✏️',name:'숙제하기',time:'afternoon'},{id:'r4',icon:'😴',name:'일찍 자기',time:'night'}],children:[{id:'c1',name:'지수',avatar:'👧',color:'#6C63FF',checks:{},ladderUsed:{}}],kingShown:{},readingLogs:[]};}
+function oldUtcKeyToLocalKey(s) {
+  try {
+    const parts = s.split('-');
+    if (parts.length !== 3) return s;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return s;
+    const localDate = new Date(y, m, d, 0, 0, 0, 0);
+    const oldKey = localDate.toISOString().slice(0, 10);
+    if (oldKey === s) {
+      return s;
+    } else {
+      const adjustedDate = new Date(localDate);
+      adjustedDate.setDate(adjustedDate.getDate() + 1);
+      if (adjustedDate.toISOString().slice(0, 10) === s) {
+        const ay = adjustedDate.getFullYear();
+        const am = String(adjustedDate.getMonth() + 1).padStart(2, '0');
+        const ad = String(adjustedDate.getDate()).padStart(2, '0');
+        return `${ay}-${am}-${ad}`;
+      }
+      return s;
+    }
+  } catch(e) {
+    return s;
+  }
+}
 function loadState(){
   try{
     // 우선 rk3 키 시도
@@ -801,18 +833,56 @@ function loadState(){
       if(!c.avatar)     c.avatar='👧';
       if(!c.color)      c.color='#6C63FF';
     });
+
+    // 마이그레이션 적용 (UTC 날짜 -> 로컬 날짜)
+    if (s && !s.localDatesMigrated) {
+      if (s.children && Array.isArray(s.children)) {
+        s.children.forEach(c => {
+          if (c.checks) {
+            const newChecks = {};
+            Object.keys(c.checks).forEach(k => {
+              const parts = k.split('_');
+              if (parts.length >= 2) {
+                const oldDateKey = parts[0];
+                const routineId = parts.slice(1).join('_');
+                const newDateKey = oldUtcKeyToLocalKey(oldDateKey);
+                newChecks[`${newDateKey}_${routineId}`] = c.checks[k];
+              } else {
+                newChecks[k] = c.checks[k];
+              }
+            });
+            c.checks = newChecks;
+          }
+        });
+      }
+      if (s.readingLogs && Array.isArray(s.readingLogs)) {
+        s.readingLogs.forEach(l => {
+          if (l.date) {
+            l.date = oldUtcKeyToLocalKey(l.date);
+          }
+        });
+      }
+      s.localDatesMigrated = true;
+    }
+
     return s;
   }catch(e){ return defaultState(); }
 }
 function saveState(){localStorage.setItem('rk3',JSON.stringify(state));}
 
 let state=loadState();
+saveState();
 let curChildIdx=0,weekStart=getWeekStart(new Date()),selIcon=ROUTINE_ICONS[0],selAvatar=CHILD_AVATARS[0],selColor=CHILD_COLORS[0],editChildIdx=-1,editRoutineId=null,rqCtx={child:null,dateKey:''},logFilterId='all';
 
 // ════════ 날짜 유틸 ════════
 function getWeekStart(d){const dt=new Date(d);dt.setHours(0,0,0,0);const day=dt.getDay();dt.setDate(dt.getDate()-(day===0?6:day-1));return dt;}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
-function toKey(d){return d.toISOString().slice(0,10);}
+function toKey(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const r=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${r}`;
+}
 function today(){return new Date();}
 function isToday(d){return toKey(d)===toKey(today());}
 function isFuture(d){const t=new Date(today());t.setHours(0,0,0,0);const x=new Date(d);x.setHours(0,0,0,0);return x>t;}
@@ -856,7 +926,7 @@ function renderSummary(){
   let wd=0,wt=0;
   for(let i=0;i<7;i++){const d=addDays(weekStart,i);if(isFuture(d))break;const k=toKey(d);r.forEach(x=>{wt++;if(child.checks[`${k}_${x.id}`])wd++;});}
   const nm=today().getMonth(),ny=today().getFullYear();
-  let md=0;Object.keys(child.checks).forEach(k=>{if(child.checks[k]){const d=new Date(k.split('_')[0]);if(d.getMonth()===nm&&d.getFullYear()===ny)md++;}});
+  let md=0;Object.keys(child.checks).forEach(k=>{if(child.checks[k]){const parts=k.split('_')[0].split('-');if(parts.length===3){const y=parseInt(parts[0],10);const m=parseInt(parts[1],10)-1;if(m===nm&&y===ny)md++;}}});
   document.getElementById('summaryRow').innerHTML=`
     <div class="summary-card"><div class="summary-num">${n>0?Math.round(td/n*100):0}%</div><div class="summary-label">오늘 달성률</div></div>
     <div class="summary-card"><div class="summary-num">${td}/${n}</div><div class="summary-label">오늘 완료</div></div>
@@ -990,7 +1060,7 @@ function checkKingOnLoad(){
 }
 function checkKingManual(){const now=today(),tm=new Date(now.getFullYear(),now.getMonth(),1);showKing(tm,`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);}
 function showKing(targetMonth,mk){
-  const scores=state.children.map(c=>{let cnt=0;const tm=targetMonth.getMonth(),ty=targetMonth.getFullYear();Object.keys(c.checks).forEach(k=>{if(c.checks[k]){const d=new Date(k.split('_')[0]);if(d.getMonth()===tm&&d.getFullYear()===ty)cnt++;}});return{c,cnt};});
+  const scores=state.children.map(c=>{let cnt=0;const tm=targetMonth.getMonth(),ty=targetMonth.getFullYear();Object.keys(c.checks).forEach(k=>{if(c.checks[k]){const parts=k.split('_')[0].split('-');if(parts.length===3){const y=parseInt(parts[0],10);const m=parseInt(parts[1],10)-1;if(m===tm&&y===ty)cnt++;}}});return{c,cnt};});
   const best=scores.sort((a,b)=>b.cnt-a.cnt)[0];
   if(!best||best.cnt===0){alert('아직 이번 달 루틴 기록이 없어요! 루틴을 완료해보세요 😊');return;}
   document.getElementById('kingMonth').textContent=`${targetMonth.getFullYear()}년 ${targetMonth.getMonth()+1}월 루틴왕 🏆`;
@@ -1011,7 +1081,7 @@ function setLogFilter(id){logFilterId=id;renderLogTabs();renderLogList();}
 function renderLogList(){
   const logs=(state.readingLogs||[]).filter(l=>logFilterId==='all'||l.childId===logFilterId);
   if(!logs.length){document.getElementById('logList').innerHTML='<div class="log-empty"><div class="ei">📭</div>아직 기록된 배움이 없어요.<br>독서 루틴 체크 시 20% 확률로 팝업이 떠요!</div>';return;}
-  document.getElementById('logList').innerHTML=logs.map(l=>{const d=new Date(l.date);const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;return`<div class="log-item"><div class="log-meta"><div class="log-av" style="background:${l.childColor}20">${l.childAvatar}</div><span class="log-child" style="color:${l.childColor}">${l.childName}</span><span class="log-date">📅 ${ds}</span></div><div class="log-text">"${l.memo}"</div><button class="log-del" onclick="delLog('${l.id}')">✕</button></div>`;}).join('');
+  document.getElementById('logList').innerHTML=logs.map(l=>{const ds=l.date.split('-').join('.');return`<div class="log-item"><div class="log-meta"><div class="log-av" style="background:${l.childColor}20">${l.childAvatar}</div><span class="log-child" style="color:${l.childColor}">${l.childName}</span><span class="log-date">📅 ${ds}</span></div><div class="log-text">"${l.memo}"</div><button class="log-del" onclick="delLog('${l.id}')">✕</button></div>`;}).join('');
 }
 function delLog(id){if(!confirm('이 기록을 삭제할까요?'))return;state.readingLogs=state.readingLogs.filter(l=>l.id!==id);saveState();renderLogList();}
 

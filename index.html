@@ -491,58 +491,95 @@ textarea.form-input { resize: none; line-height: 1.7; }
 .log-empty { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
 .log-empty .ei { font-size: 34px; margin-bottom: 9px; }
 
-/* ════════ 풍선 터뜨리기 미니게임 ════════ */
-.balloon {
-  position: absolute;
-  width: 50px;
-  height: 62px;
-  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+/* ════════ 사천성 미니게임 ════════ */
+.sichuan-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr); /* COLS + 2 = 6 + 2 = 8 cols */
+  grid-template-rows: repeat(6, 1fr);    /* ROWS + 2 = 4 + 2 = 6 rows */
+  gap: 4px;
+  width: 100%;
+  max-width: 380px;
+  height: 280px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+/* 타일 스타일 */
+.sichuan-tile {
+  background: var(--card);
+  border: 1.5px solid var(--bdr);
+  border-radius: 8px;
   cursor: pointer;
-  animation: floatUp linear forwards;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: inset -6px -6px 12px rgba(0,0,0,0.15), 2px 4px 8px rgba(0,0,0,0.1);
-  touch-action: none;
+  font-size: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
-/* 풍선 매듭 */
-.balloon::after {
-  content: "▲";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: inherit;
+.sichuan-tile:active {
+  transform: scale(0.92);
 }
-/* 풍선 실 */
-.balloon::before {
-  content: "";
-  position: absolute;
-  bottom: -24px;
-  left: 50%;
-  width: 1.5px;
-  height: 18px;
-  background: rgba(0,0,0,0.15);
+.sichuan-tile.selected {
+  border-color: var(--pri);
+  background: var(--pri-l);
+  box-shadow: 0 0 8px rgba(108, 99, 255, 0.4);
+  transform: scale(1.04);
+  animation: pulseBorder 1s infinite alternate;
 }
-@keyframes floatUp {
-  from { transform: translateY(370px) rotate(0deg); }
-  to { transform: translateY(-80px) rotate(15deg); }
+@keyframes pulseBorder {
+  from { border-color: var(--pri); }
+  to { border-color: #8B5CF6; }
 }
 
-/* 터뜨림 파티클 */
-.particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: particleOut 0.5s ease-out forwards;
+/* 사천성 타일 실패 흔들림 애니메이션 */
+.sichuan-tile.shake {
+  animation: tileShake 0.3s ease-in-out;
+  border-color: var(--err);
+  background: #FEF2F2;
 }
-@keyframes particleOut {
-  0% { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+@keyframes tileShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px) rotate(-3deg); }
+  75% { transform: translateX(4px) rotate(3deg); }
+}
+
+/* 비어있는 가상의 셀 (경계선 및 빈 공간) */
+.sichuan-empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 연결선 SVG overlay */
+.sichuan-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+.sichuan-path-line {
+  fill: none;
+  stroke: var(--pri);
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 8px;
+  animation: dashLine 0.5s linear infinite, glowLine 0.5s ease-out forwards;
+}
+@keyframes dashLine {
+  to { stroke-dashoffset: -16px; }
+}
+@keyframes glowLine {
+  0% { opacity: 0; stroke-width: 8px; filter: drop-shadow(0 0 8px var(--pri)); }
+  50% { opacity: 1; stroke-width: 5px; }
+  100% { opacity: 0; stroke-width: 1px; }
 }
 
 /* ════════════════════════════════════
@@ -806,37 +843,43 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
 </div>
 
-<!-- 풍선 터뜨리기 미니게임 모달 -->
+<!-- 사천성 미니게임 모달 -->
 <div class="overlay" id="gameModal" style="display:none; z-index: 2000;">
-  <div class="modal" style="max-width: 440px; text-align: center; overflow: hidden;">
+  <div class="modal" style="max-width: 440px; text-align: center; overflow: hidden; padding: 20px;">
     <button class="modal-x" onclick="closeGameModal()">✕</button>
+    
     <div id="gameIntro">
-      <div style="font-size: 50px; margin-bottom: 10px; animation: bounce 1s infinite;">🎈</div>
-      <div class="modal-title" style="font-size: 20px; color: var(--pri);">루틴 4개 달성 기념 미니게임!</div>
-      <div class="modal-sub" style="margin-top: 6px; font-size: 13px;">오늘 하루도 멋지게 습관을 지켰군요!<br>신나는 <strong>풍선 터뜨리기</strong> 미니게임을 선물로 드려요! 🎁</div>
-      <button class="btn-pri" style="margin-top: 15px; font-size: 16px;" onclick="startGame()">🎈 게임 시작하기! 🎈</button>
+      <div style="font-size: 50px; margin-bottom: 10px; animation: bounce 1s infinite;">🐼</div>
+      <div class="modal-title" style="font-size: 20px; color: var(--pri);">지혜 쏙쏙 사천성 게임!</div>
+      <div class="modal-sub" style="margin-top: 6px; font-size: 13px;">오늘 하루도 루틴 완료! 참 잘했어요 🌟<br>같은 모양의 짝을 연결해 지우는 <strong>사천성 퍼즐</strong>을 완성해봐요!</div>
+      <button class="btn-pri" style="margin-top: 15px; font-size: 16px;" onclick="startGame()">🐼 퍼즐 시작하기! 🐼</button>
     </div>
     
-    <div id="gamePlay" style="display: none; position: relative; height: 350px; background: linear-gradient(180deg, #EEF0FF, #FFFFFF); border-radius: 14px; border: 1.5px solid var(--bdr); overflow: hidden; margin-top: 10px;">
-      <!-- Countdown Overlay -->
-      <div id="gameCountdown" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 900; color: var(--pri); background: rgba(255,255,255,0.8); z-index: 10;"></div>
-      
-      <!-- Game Board / Balloon Container -->
-      <div id="gameCanvas" style="position: absolute; inset: 0; pointer-events: auto;"></div>
-      
-      <!-- Stats (Score & Time) -->
-      <div style="position: absolute; top: 10px; left: 12px; font-weight: 700; font-size: 13px; color: var(--pri); background: rgba(255,255,255,0.9); padding: 4px 10px; border-radius: 100px; border: 1px solid var(--bdr); pointer-events: none; z-index: 5;">
-        점수: <span id="gameScoreVal">0</span>점
+    <div id="gamePlay" style="display: none; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--pri); background: #EEF0FF; padding: 4px 12px; border-radius: 100px;">
+          남은 짝: <span id="sichuanPairsVal">12</span>개
+        </div>
+        <button class="btn-pri" style="width: auto; margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 100px; background: #8B5CF6;" onclick="shuffleSichuan()">
+          🔀 섞기 (셔플)
+        </button>
       </div>
-      <div style="position: absolute; top: 10px; right: 12px; font-weight: 700; font-size: 13px; color: var(--err); background: rgba(255,255,255,0.9); padding: 4px 10px; border-radius: 100px; border: 1px solid var(--bdr); pointer-events: none; z-index: 5;">
-        남은 시간: <span id="gameTimeVal">10</span>초
+      
+      <!-- Sichuan Board Container -->
+      <div style="position: relative; width: 100%; display: flex; justify-content: center; background: #F9FAFB; border-radius: 16px; border: 1.5px solid var(--bdr); padding: 6px; box-sizing: border-box;">
+        <div class="sichuan-board" id="sichuanBoard"></div>
+        <svg class="sichuan-svg" id="sichuanSvg"></svg>
+      </div>
+      
+      <div style="font-size: 11px; color: var(--muted); margin-top: 8px; text-align: center; word-break: keep-all;">
+        💡 규칙: 같은 모양의 타일을 최대 두 번 꺾이는 선으로 방해물 없이 이을 수 있으면 지울 수 있어요! 막히면 <strong>섞기</strong>를 눌러주세요.
       </div>
     </div>
     
     <div id="gameResult" style="display: none;">
       <div style="font-size: 60px; margin-bottom: 10px; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1);">🏆</div>
-      <div class="modal-title" style="font-size: 22px; color: #F59E0B;" id="gameResultTitle">우와, 대단해요!</div>
-      <div class="modal-sub" style="margin-top: 8px; font-size: 14px;" id="gameResultText">풍선을 총 <strong>12개</strong> 터뜨려서<br><strong>120점</strong>을 얻었어요! 🎉</div>
+      <div class="modal-title" style="font-size: 22px; color: #F59E0B;" id="gameResultTitle">최고의 지혜왕 탄생!</div>
+      <div class="modal-sub" style="margin-top: 8px; font-size: 14px;" id="gameResultText">사천성 퍼즐을 완전히 정복했어요!<br>참 잘했어요! 🎉</div>
       <button class="btn-pri" style="margin-top: 15px;" onclick="finishGame()">참 잘했어요! 완료 🎊</button>
     </div>
   </div>
@@ -1223,27 +1266,25 @@ document.querySelectorAll('.overlay .modal').forEach(modal=>{
   modal.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-sY;modal.style.transition='transform .2s';modal.style.transform='';if(dy>90 && modal.closest('.overlay').id !== 'gameModal')modal.closest('.overlay').style.display='none';setTimeout(()=>modal.style.transition='',200);drag=false;});
 });
 
-// ════════ 풍선 터뜨리기 미니게임 ════════
-let GAME_CTX={child:null,dateKey:'',score:0,timeLeft:10,timer:null,spawnInterval:null};
-const BALLOON_COLORS=['#FF6B9D','#6C63FF','#22C55E','#F59E0B','#3B82F6','#EF4444','#8B5CF6','#14B8A6'];
-const BALLOON_EMOJIS=['🎈','⭐','🍬','🧸','🍭','🌈','🐱','🦄','🎨','🍪'];
+// ════════ 사천성 미니게임 ════════
+const ROWS = 4;
+const COLS = 6;
+let SICHUAN = { grid: [], selected: null, child: null, dateKey: '' };
+const SICHUAN_EMOJIS = ['🐱','🐶','🦊','🐼','🐨','🐸','🐯','🐰','🐵','🐷','🐹','🦄'];
 
 function checkMiniGameTrigger(child,dateKey){
   if(!child.gamesPlayed) child.gamesPlayed={};
   const r=allR();
   const totalRoutines=r.length;
   const doneCount=r.filter(x=>child.checks[`${dateKey}_${x.id}`]).length;
-  
-  // 성공 조건: 완료한 루틴이 4개 이상이거나, 혹은 등록된 전체 루틴 개수가 4개 미만인 경우 전체 루틴을 다 완료했을 때!
   const targetCompleted = (doneCount >= 4) || (totalRoutines < 4 && totalRoutines > 0 && doneCount === totalRoutines);
   
   if(targetCompleted){
-    if(child.gamesPlayed[dateKey]) return; // 이미 오늘 플레이를 완료했다면 무시
+    if(child.gamesPlayed[dateKey]) return;
     setTimeout(()=>{
       openGameModal(child,dateKey);
     },550);
   } else {
-    // 4개 미만(혹은 전체 완료 미만)으로 떨어지면, 다시 도전해볼 수 있도록 플레이 여부 초기화! (테스트 및 오클릭 시 매우 편리함)
     if(child.gamesPlayed[dateKey]){
       delete child.gamesPlayed[dateKey];
       saveState();
@@ -1252,9 +1293,7 @@ function checkMiniGameTrigger(child,dateKey){
 }
 
 function openGameModal(child,dateKey){
-  GAME_CTX={child,dateKey,score:0,timeLeft:10,timer:null,spawnInterval:null};
-  document.getElementById('gameScoreVal').textContent='0';
-  document.getElementById('gameTimeVal').textContent='10';
+  SICHUAN = { grid: [], selected: null, child, dateKey };
   document.getElementById('gameIntro').style.display='block';
   document.getElementById('gamePlay').style.display='none';
   document.getElementById('gameResult').style.display='none';
@@ -1262,143 +1301,262 @@ function openGameModal(child,dateKey){
 }
 
 function closeGameModal(){
-  clearInterval(GAME_CTX.timer);
-  clearInterval(GAME_CTX.spawnInterval);
   document.getElementById('gameModal').style.display='none';
 }
 
 function startGame(){
   document.getElementById('gameIntro').style.display='none';
   document.getElementById('gamePlay').style.display='block';
-  const cd=document.getElementById('gameCountdown');
-  cd.style.display='flex';
-  let cnt=3;
-  cd.textContent=cnt;
-  const cdInterval=setInterval(()=>{
-    cnt--;
-    if(cnt>0){
-      cd.textContent=cnt;
-    }else if(cnt===0){
-      cd.textContent='출발! 🎈';
-    }else{
-      clearInterval(cdInterval);
-      cd.style.display='none';
-      runGameEngine();
+  initSichuanGame();
+}
+
+function initSichuanGame() {
+  let pool = [...SICHUAN_EMOJIS, ...SICHUAN_EMOJIS];
+  pool.sort(() => Math.random() - 0.5);
+  
+  const grid = [];
+  for (let r = 0; r < ROWS + 2; r++) {
+    grid[r] = [];
+    for (let c = 0; c < COLS + 2; c++) {
+      if (r === 0 || r === ROWS + 1 || c === 0 || c === COLS + 1) {
+        grid[r][c] = null;
+      } else {
+        const idx = (r - 1) * COLS + (c - 1);
+        grid[r][c] = pool[idx];
+      }
     }
-  },1000);
+  }
+  SICHUAN.grid = grid;
+  SICHUAN.selected = null;
+  
+  document.getElementById('sichuanSvg').innerHTML = '';
+  
+  renderSichuanBoard();
 }
 
-function runGameEngine(){
-  const canvas=document.getElementById('gameCanvas');
-  canvas.innerHTML='';
-  GAME_CTX.score=0;
-  GAME_CTX.timeLeft=10;
-  
-  // 타이머 실행
-  GAME_CTX.timer=setInterval(()=>{
-    GAME_CTX.timeLeft--;
-    document.getElementById('gameTimeVal').textContent=GAME_CTX.timeLeft;
-    if(GAME_CTX.timeLeft<=0){
-      endGame();
+function renderSichuanBoard() {
+  const board = document.getElementById('sichuanBoard');
+  let html = '';
+  for (let r = 0; r < ROWS + 2; r++) {
+    for (let c = 0; c < COLS + 2; c++) {
+      const icon = SICHUAN.grid[r][c];
+      const isBoundary = r === 0 || r === ROWS + 1 || c === 0 || c === COLS + 1;
+      
+      if (isBoundary || icon === null) {
+        html += `<div class="sichuan-empty" id="cell-${r}-${c}"></div>`;
+      } else {
+        const isSel = SICHUAN.selected && SICHUAN.selected.r === r && SICHUAN.selected.c === c;
+        html += `<div class="sichuan-tile${isSel?' selected':''}" id="cell-${r}-${c}" onclick="clickSichuanTile(${r},${c})">${icon}</div>`;
+      }
     }
-  },1000);
+  }
+  board.innerHTML = html;
   
-  // 풍선 스폰 실행
-  GAME_CTX.spawnInterval=setInterval(()=>{
-    spawnBalloon();
-  },450);
+  let count = 0;
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      if (SICHUAN.grid[r][c] !== null) count++;
+    }
+  }
+  document.getElementById('sichuanPairsVal').textContent = Math.ceil(count / 2);
 }
 
-function spawnBalloon(){
-  const canvas=document.getElementById('gameCanvas');
-  const b=document.createElement('div');
-  b.className='balloon';
-  const color=BALLOON_COLORS[Math.floor(Math.random()*BALLOON_COLORS.length)];
-  const emoji=BALLOON_EMOJIS[Math.floor(Math.random()*BALLOON_EMOJIS.length)];
-  b.style.background=color;
-  b.style.color=color; // 매듭 색상 맞추기
-  b.textContent=emoji;
+function clickSichuanTile(r, c) {
+  if (SICHUAN.grid[r][c] === null) return;
   
-  const left=10+Math.random()*75; // 10% ~ 85% 사이
-  b.style.left=`${left}%`;
-  
-  const duration=2+Math.random()*1.5; // 2초 ~ 3.5초
-  b.style.animationDuration=`${duration}s`;
-  
-  // 클릭 및 터치 이벤트
-  const popHandler=(e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    popBalloon(b,color);
-  };
-  b.addEventListener('click',popHandler);
-  b.addEventListener('touchstart',popHandler,{passive:false});
-  
-  canvas.appendChild(b);
-  
-  // 화면 밖으로 나가면 삭제
-  setTimeout(()=>{
-    if(b.parentNode===canvas) b.remove();
-  },duration*1000);
-}
-
-function popBalloon(b,color){
-  GAME_CTX.score+=10;
-  document.getElementById('gameScoreVal').textContent=GAME_CTX.score;
-  
-  // 파티클 효과 생성
-  const rect=b.getBoundingClientRect();
-  const parentRect=b.parentNode.getBoundingClientRect();
-  const x=rect.left-parentRect.left+rect.width/2;
-  const y=rect.top-parentRect.top+rect.height/2;
-  
-  b.remove();
-  
-  const canvas=document.getElementById('gameCanvas');
-  for(let i=0;i<12;i++){
-    const p=document.createElement('div');
-    p.className='particle';
-    p.style.background=color;
-    p.style.left=`${x}px`;
-    p.style.top=`${y}px`;
+  if (!SICHUAN.selected) {
+    SICHUAN.selected = {r, c};
+    renderSichuanBoard();
+  } else {
+    const sr = SICHUAN.selected.r;
+    const sc = SICHUAN.selected.c;
     
-    const angle=Math.random()*Math.PI*2;
-    const distance=30+Math.random()*50;
-    const dx=Math.cos(angle)*distance;
-    const dy=Math.sin(angle)*distance;
-    
-    p.style.setProperty('--dx',`${dx}px`);
-    p.style.setProperty('--dy',`${dy}px`);
-    
-    canvas.appendChild(p);
-    setTimeout(()=>p.remove(),500);
+    if (sr === r && sc === c) {
+      SICHUAN.selected = null;
+      renderSichuanBoard();
+    } else if (SICHUAN.grid[sr][sc] === SICHUAN.grid[r][c]) {
+      const path = findPath(sr, sc, r, c, SICHUAN.grid);
+      if (path) {
+        drawSichuanPath({r: sr, c: sc}, {r, c}, path);
+        SICHUAN.grid[sr][sc] = null;
+        SICHUAN.grid[r][c] = null;
+        SICHUAN.selected = null;
+        
+        document.getElementById('sichuanBoard').style.pointerEvents = 'none';
+        
+        setTimeout(() => {
+          renderSichuanBoard();
+          document.getElementById('sichuanBoard').style.pointerEvents = 'auto';
+          
+          if (isSichuanBoardEmpty()) {
+            endGame();
+          }
+        }, 400);
+      } else {
+        const el1 = document.getElementById(`cell-${sr}-${sc}`);
+        const el2 = document.getElementById(`cell-${r}-${c}`);
+        if(el1) el1.classList.add('shake');
+        if(el2) el2.classList.add('shake');
+        
+        SICHUAN.selected = null;
+        setTimeout(() => {
+          renderSichuanBoard();
+        }, 300);
+      }
+    } else {
+      SICHUAN.selected = {r, c};
+      renderSichuanBoard();
+    }
   }
 }
 
+function shuffleSichuan() {
+  const remaining = [];
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      if (SICHUAN.grid[r][c] !== null) {
+        remaining.push(SICHUAN.grid[r][c]);
+      }
+    }
+  }
+  
+  if (remaining.length === 0) return;
+  
+  remaining.sort(() => Math.random() - 0.5);
+  
+  let idx = 0;
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      if (SICHUAN.grid[r][c] !== null) {
+        SICHUAN.grid[r][c] = remaining[idx++];
+      }
+    }
+  }
+  
+  SICHUAN.selected = null;
+  renderSichuanBoard();
+}
+
+function isSichuanBoardEmpty() {
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      if (SICHUAN.grid[r][c] !== null) return false;
+    }
+  }
+  return true;
+}
+
+function getGridCellCenter(r, c) {
+  const board = document.getElementById('sichuanBoard');
+  const w = board.clientWidth;
+  const h = board.clientHeight;
+  const cellW = w / (COLS + 2);
+  const cellH = h / (ROWS + 2);
+  return {
+    x: (c + 0.5) * cellW,
+    y: (r + 0.5) * cellH
+  };
+}
+
+function drawSichuanPath(p1, p2, turnPoints) {
+  const svg = document.getElementById('sichuanSvg');
+  svg.innerHTML = '';
+  
+  const pts = [];
+  pts.push(getGridCellCenter(p1.r, p1.c));
+  for (let i = 0; i < turnPoints.length; i++) {
+    pts.push(getGridCellCenter(turnPoints[i].r, turnPoints[i].c));
+  }
+  pts.push(getGridCellCenter(p2.r, p2.c));
+  
+  const pointsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
+  
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  polyline.setAttribute('points', pointsStr);
+  polyline.setAttribute('class', 'sichuan-path-line');
+  svg.appendChild(polyline);
+  
+  setTimeout(() => {
+    svg.innerHTML = '';
+  }, 500);
+}
+
+// ════════ 사천성 경로 탐색 알고리즘 (0~2회 꺾기) ════════
+function checkLine(r1, c1, r2, c2, grid) {
+  if (r1 !== r2 && c1 !== c2) return false;
+  if (r1 === r2) {
+    const min = Math.min(c1, c2);
+    const max = Math.max(c1, c2);
+    for (let c = min + 1; c < max; c++) {
+      if (grid[r1][c] !== null) return false;
+    }
+    return true;
+  } else {
+    const min = Math.min(r1, r2);
+    const max = Math.max(r1, r2);
+    for (let r = min + 1; r < max; r++) {
+      if (grid[r][c1] !== null) return false;
+    }
+    return true;
+  }
+}
+
+function checkOneTurn(r1, c1, r2, c2, grid) {
+  if (grid[r1][c2] === null && checkLine(r1, c1, r1, c2, grid) && checkLine(r1, c2, r2, c2, grid)) {
+    return [{r: r1, c: c2}];
+  }
+  if (grid[r2][c1] === null && checkLine(r1, c1, r2, c1, grid) && checkLine(r2, c1, r2, c2, grid)) {
+    return [{r: r2, c: c1}];
+  }
+  return null;
+}
+
+function checkTwoTurns(r1, c1, r2, c2, grid) {
+  for (let c = 0; c <= COLS + 1; c++) {
+    if (c === c1 || c === c2) continue;
+    if (grid[r1][c] === null && grid[r2][c] === null) {
+      if (checkLine(r1, c1, r1, c, grid) && checkLine(r1, c, r2, c, grid) && checkLine(r2, c, r2, c2, grid)) {
+        return [{r: r1, c: c}, {r: r2, c: c}];
+      }
+    }
+  }
+  for (let r = 0; r <= ROWS + 1; r++) {
+    if (r === r1 || r === r2) continue;
+    if (grid[r][c1] === null && grid[r][c2] === null) {
+      if (checkLine(r1, c1, r, c1, grid) && checkLine(r, c1, r, c2, grid) && checkLine(r, c2, r2, c2, grid)) {
+        return [{r: r, c: c1}, {r: r, c: c2}];
+      }
+    }
+  }
+  return null;
+}
+
+function findPath(r1, c1, r2, c2, grid) {
+  if (grid[r1][c1] !== grid[r2][c2] || grid[r1][c1] === null) return null;
+  if (r1 === r2 && c1 === c2) return null;
+  
+  if (checkLine(r1, c1, r2, c2, grid)) {
+    return [];
+  }
+  
+  const oneTurn = checkOneTurn(r1, c1, r2, c2, grid);
+  if (oneTurn) return oneTurn;
+  
+  const twoTurns = checkTwoTurns(r1, c1, r2, c2, grid);
+  if (twoTurns) return twoTurns;
+  
+  return null;
+}
+
 function endGame(){
-  clearInterval(GAME_CTX.timer);
-  clearInterval(GAME_CTX.spawnInterval);
-  
-  // 화면에 남은 풍선들 제거
-  document.getElementById('gameCanvas').innerHTML='';
-  
   document.getElementById('gamePlay').style.display='none';
   document.getElementById('gameResult').style.display='block';
-  
-  const score=GAME_CTX.score;
-  let title='풍선 비기너 🎈';
-  if(score>=150) title='신화속 풍선 영웅 👑';
-  else if(score>=110) title='풍선 정복왕 🏆';
-  else if(score>=70) title='풍선 스나이퍼 🎯';
-  else if(score>=40) title='풍선 사냥꾼 🌟';
-  
-  document.getElementById('gameResultTitle').textContent=title;
-  document.getElementById('gameResultText').innerHTML=`${GAME_CTX.child.name}이(가) 풍선을 터뜨려서<br><strong style="font-size:20px; color:var(--pri);">${score}점</strong>을 얻었어요! 🎉`;
+  document.getElementById('gameResultText').innerHTML=`사천성 퍼즐을 완벽하게 해결했어요!<br><strong style="font-size: 15px; color: var(--pri);">${SICHUAN.child.name}의 멋진 집중력 칭찬해요! 🥳</strong>`;
 }
 
 function finishGame(){
-  if(!GAME_CTX.child.gamesPlayed) GAME_CTX.child.gamesPlayed={};
-  GAME_CTX.child.gamesPlayed[GAME_CTX.dateKey]=true;
+  if(!SICHUAN.child.gamesPlayed) SICHUAN.child.gamesPlayed={};
+  SICHUAN.child.gamesPlayed[SICHUAN.dateKey]=true;
   saveState();
   closeGameModal();
   render();

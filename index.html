@@ -858,7 +858,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
           남은 짝: <span id="sichuanPairsVal">24</span>개
         </div>
         <button id="sichuanShuffleBtn" class="btn-pri" style="width: auto; margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 100px; background: #8B5CF6;" onclick="shuffleSichuan()">
-          🔀 섞기 (3)
+          🔀 섞기 (6)
         </button>
       </div>
       
@@ -1284,7 +1284,7 @@ let SICHUAN = {
   dateKey: '', 
   timerId: null, 
   timeLeft: 300, 
-  shufflesLeft: 3, 
+  shufflesLeft: 6, 
   score: 0 
 };
 const SICHUAN_EMOJIS_ALL = [
@@ -1326,7 +1326,7 @@ function openGameModal(child,dateKey){
     dateKey, 
     timerId: null, 
     timeLeft: 300, 
-    shufflesLeft: 3, 
+    shufflesLeft: 6, 
     score: 0 
   };
   document.getElementById('gameIntro').style.display='block';
@@ -1352,7 +1352,7 @@ function startGame(){
 function initSichuanGame() {
   // 상태 변수 초기화
   SICHUAN.timeLeft = 300; // 5분
-  SICHUAN.shufflesLeft = 3;
+  SICHUAN.shufflesLeft = 6;
   SICHUAN.score = 0;
   SICHUAN.selected = null;
   
@@ -1510,11 +1510,139 @@ function renderSichuanBoard() {
   document.getElementById('sichuanPairsVal').textContent = Math.ceil(count / 2);
 }
 
+// ════════ 사천성 미니게임 사운드 효과음 (Web Audio API) ════════
+let sichuanAudioCtx = null;
+
+function getSichuanAudioContext() {
+  if (!sichuanAudioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      sichuanAudioCtx = new AudioContext();
+    }
+  }
+  if (sichuanAudioCtx && sichuanAudioCtx.state === 'suspended') {
+    sichuanAudioCtx.resume();
+  }
+  return sichuanAudioCtx;
+}
+
+function playSichuanSelectSound() {
+  try {
+    const ctx = getSichuanAudioContext();
+    if (!ctx) return;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+    
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.05);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function playSichuanMatchSound() {
+  try {
+    const ctx = getSichuanAudioContext();
+    if (!ctx) return;
+    
+    // 도(C5)-미(E5)-솔(G5)-도(C6) 4음 오름차순의 밝고 재밌는 아르페지오
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'triangle'; // 부드럽고 귀여운 레트로 게임 분위기
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.06);
+      
+      gain.gain.setValueAtTime(0.0, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.06 + 0.2);
+      
+      osc.start(ctx.currentTime + idx * 0.06);
+      osc.stop(ctx.currentTime + idx * 0.06 + 0.2);
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function playSichuanFailSound() {
+  try {
+    const ctx = getSichuanAudioContext();
+    if (!ctx) return;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sawtooth'; // 통통 튀는 미스 톤
+    osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+    osc.frequency.linearRampToValueAtTime(110, ctx.currentTime + 0.15); // A2 (pitch down)
+    
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function playSichuanWinSound() {
+  try {
+    const ctx = getSichuanAudioContext();
+    if (!ctx) return;
+    
+    // 찬란한 축하 팡파르
+    const chord = [
+      { f: 523.25, d: 0.1, delay: 0 },
+      { f: 659.25, d: 0.1, delay: 0.1 },
+      { f: 783.99, d: 0.1, delay: 0.2 },
+      { f: 1046.50, d: 0.4, delay: 0.3 }
+    ];
+    
+    chord.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.delay);
+      
+      gain.gain.setValueAtTime(0.0, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + n.delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.delay + n.d);
+      
+      osc.start(ctx.currentTime + n.delay);
+      osc.stop(ctx.currentTime + n.delay + n.d);
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 function clickSichuanTile(r, c) {
   if (SICHUAN.grid[r][c] === null) return;
   
   if (!SICHUAN.selected) {
     SICHUAN.selected = {r, c};
+    playSichuanSelectSound();
     renderSichuanBoard();
   } else {
     const sr = SICHUAN.selected.r;
@@ -1522,10 +1650,12 @@ function clickSichuanTile(r, c) {
     
     if (sr === r && sc === c) {
       SICHUAN.selected = null;
+      playSichuanSelectSound();
       renderSichuanBoard();
     } else if (SICHUAN.grid[sr][sc] === SICHUAN.grid[r][c]) {
       const path = findPath(sr, sc, r, c, SICHUAN.grid);
       if (path) {
+        playSichuanMatchSound();
         drawSichuanPath({r: sr, c: sc}, {r, c}, path);
         SICHUAN.grid[sr][sc] = null;
         SICHUAN.grid[r][c] = null;
@@ -1542,6 +1672,7 @@ function clickSichuanTile(r, c) {
           }
         }, 400);
       } else {
+        playSichuanFailSound();
         const el1 = document.getElementById(`cell-${sr}-${sc}`);
         const el2 = document.getElementById(`cell-${r}-${c}`);
         if(el1) el1.classList.add('shake');
@@ -1554,6 +1685,7 @@ function clickSichuanTile(r, c) {
       }
     } else {
       SICHUAN.selected = {r, c};
+      playSichuanSelectSound();
       renderSichuanBoard();
     }
   }
@@ -1717,6 +1849,8 @@ function endGame(){
     clearInterval(SICHUAN.timerId);
     SICHUAN.timerId = null;
   }
+  
+  playSichuanWinSound();
   
   // 상세 보너스 및 점수 계산
   const baseScore = 1000;

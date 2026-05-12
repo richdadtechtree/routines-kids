@@ -495,12 +495,9 @@ textarea.form-input { resize: none; line-height: 1.7; }
 .sichuan-board {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(8, 1fr); /* COLS + 2 = 6 + 2 = 8 cols */
-  grid-template-rows: repeat(6, 1fr);    /* ROWS + 2 = 4 + 2 = 6 rows */
   gap: 4px;
   width: 100%;
-  max-width: 380px;
-  height: 280px;
+  max-width: 420px;
   background: rgba(255, 255, 255, 0.4);
   border-radius: 16px;
   box-sizing: border-box;
@@ -858,11 +855,22 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <div id="gamePlay" style="display: none; position: relative;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <div style="font-weight: 700; font-size: 13px; color: var(--pri); background: #EEF0FF; padding: 4px 12px; border-radius: 100px;">
-          남은 짝: <span id="sichuanPairsVal">12</span>개
+          남은 짝: <span id="sichuanPairsVal">24</span>개
         </div>
-        <button class="btn-pri" style="width: auto; margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 100px; background: #8B5CF6;" onclick="shuffleSichuan()">
-          🔀 섞기 (셔플)
+        <button id="sichuanShuffleBtn" class="btn-pri" style="width: auto; margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 100px; background: #8B5CF6;" onclick="shuffleSichuan()">
+          🔀 섞기 (3)
         </button>
+      </div>
+      
+      <!-- Timer & Score Bar -->
+      <div id="gameTimerContainer" style="margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; margin-bottom: 4px;">
+          <span style="color: var(--muted);">⏰ 제한 시간: <span id="gameTimerText" style="color: var(--err); font-family: monospace; font-size: 13px;">05:00</span></span>
+          <span style="color: var(--warn);">점수: <span id="gameScoreText" style="font-size: 13px;">0</span>점</span>
+        </div>
+        <div style="width: 100%; height: 6px; background: #E5E7EB; border-radius: 100px; overflow: hidden;">
+          <div id="gameTimerBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #6C63FF, #FF6B9D); transition: width 1s linear;"></div>
+        </div>
       </div>
       
       <!-- Sichuan Board Container -->
@@ -1267,10 +1275,28 @@ document.querySelectorAll('.overlay .modal').forEach(modal=>{
 });
 
 // ════════ 사천성 미니게임 ════════
-const ROWS = 4;
-const COLS = 6;
-let SICHUAN = { grid: [], selected: null, child: null, dateKey: '' };
-const SICHUAN_EMOJIS = ['🐱','🐶','🦊','🐼','🐨','🐸','🐯','🐰','🐵','🐷','🐹','🦄'];
+const ROWS = 6;
+const COLS = 8;
+let SICHUAN = { 
+  grid: [], 
+  selected: null, 
+  child: null, 
+  dateKey: '', 
+  timerId: null, 
+  timeLeft: 300, 
+  shufflesLeft: 3, 
+  score: 0 
+};
+const SICHUAN_EMOJIS_ALL = [
+  // 동물 (Animals)
+  '🐱','🐶','🦊','🐼','🐨','🐸','🐯','🐰','🐵','🐷','🐹','🦄','🦁','🐻','🐮','🐣','🐝',
+  // 과일/음식 (Fruits/Foods)
+  '🍎','🍌','🍉','🍇','🍓','🍊','🍒','🍍','🥝','🍅','🍟','🍕','🍔','🍩','🍪','🍬','🍭','🍦','🍰',
+  // 탈것/사물 (Vehicles/Objects)
+  '🚗','🚌','🚒','🚑','✈️','🚀','⛵️','🎈','⚽️','🎨','🧸','🎁','🔑','⏰','🎸','🔮','💡','💎','🎒',
+  // 자연/날씨 (Nature/Weather)
+  '☀️','☁️','🌈','❄️','⭐','🌙','🍀','🌸','🔥','⚡'
+];
 
 function checkMiniGameTrigger(child,dateKey){
   if(!child.gamesPlayed) child.gamesPlayed={};
@@ -1293,7 +1319,16 @@ function checkMiniGameTrigger(child,dateKey){
 }
 
 function openGameModal(child,dateKey){
-  SICHUAN = { grid: [], selected: null, child, dateKey };
+  SICHUAN = { 
+    grid: [], 
+    selected: null, 
+    child, 
+    dateKey, 
+    timerId: null, 
+    timeLeft: 300, 
+    shufflesLeft: 3, 
+    score: 0 
+  };
   document.getElementById('gameIntro').style.display='block';
   document.getElementById('gamePlay').style.display='none';
   document.getElementById('gameResult').style.display='none';
@@ -1301,6 +1336,10 @@ function openGameModal(child,dateKey){
 }
 
 function closeGameModal(){
+  if (SICHUAN.timerId) {
+    clearInterval(SICHUAN.timerId);
+    SICHUAN.timerId = null;
+  }
   document.getElementById('gameModal').style.display='none';
 }
 
@@ -1311,7 +1350,35 @@ function startGame(){
 }
 
 function initSichuanGame() {
-  let pool = [...SICHUAN_EMOJIS, ...SICHUAN_EMOJIS];
+  // 상태 변수 초기화
+  SICHUAN.timeLeft = 300; // 5분
+  SICHUAN.shufflesLeft = 3;
+  SICHUAN.score = 0;
+  SICHUAN.selected = null;
+  
+  // 섞기 버튼 UI 및 상태 리셋
+  const shuffleBtn = document.getElementById('sichuanShuffleBtn');
+  if (shuffleBtn) {
+    shuffleBtn.disabled = false;
+    shuffleBtn.textContent = `🔀 섞기 (${SICHUAN.shufflesLeft})`;
+    shuffleBtn.style.background = '#8B5CF6';
+  }
+  
+  // 보드 크기 및 비율 동적 조정
+  const board = document.getElementById('sichuanBoard');
+  if (board) {
+    board.style.gridTemplateColumns = `repeat(${COLS + 2}, 1fr)`;
+    board.style.gridTemplateRows = `repeat(${ROWS + 2}, 1fr)`;
+    board.style.aspectRatio = `${COLS + 2} / ${ROWS + 2}`;
+    board.style.height = 'auto';
+  }
+
+  // 전체 이모지 풀에서 6x8 그리드에 필요한 24쌍(총 48개)을 무작위로 추려서 구성
+  const shuffledEmojis = [...SICHUAN_EMOJIS_ALL].sort(() => Math.random() - 0.5);
+  const selectedCount = (ROWS * COLS) / 2;
+  const gameEmojis = shuffledEmojis.slice(0, selectedCount);
+  
+  let pool = [...gameEmojis, ...gameEmojis];
   pool.sort(() => Math.random() - 0.5);
   
   const grid = [];
@@ -1327,11 +1394,93 @@ function initSichuanGame() {
     }
   }
   SICHUAN.grid = grid;
-  SICHUAN.selected = null;
   
   document.getElementById('sichuanSvg').innerHTML = '';
   
   renderSichuanBoard();
+  startSichuanTimer();
+}
+
+// ════════ 타이머 함수군 ════════
+function startSichuanTimer() {
+  if (SICHUAN.timerId) {
+    clearInterval(SICHUAN.timerId);
+  }
+  
+  updateTimerUI();
+  
+  SICHUAN.timerId = setInterval(() => {
+    SICHUAN.timeLeft--;
+    updateTimerUI();
+    
+    if (SICHUAN.timeLeft <= 0) {
+      clearInterval(SICHUAN.timerId);
+      SICHUAN.timerId = null;
+      handleSichuanGameOver();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const minutes = Math.floor(SICHUAN.timeLeft / 60);
+  const seconds = SICHUAN.timeLeft % 60;
+  const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+  const timerTextEl = document.getElementById('gameTimerText');
+  if (timerTextEl) {
+    timerTextEl.textContent = timeStr;
+  }
+  
+  const timerBarEl = document.getElementById('gameTimerBar');
+  if (timerBarEl) {
+    const percentage = (SICHUAN.timeLeft / 300) * 100;
+    timerBarEl.style.width = `${percentage}%`;
+    
+    // 남은 시간에 따른 타이머 색상 그라데이션 변화로 텐션 부여
+    if (percentage <= 20) {
+      timerBarEl.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)'; // Red Alert
+    } else if (percentage <= 50) {
+      timerBarEl.style.background = 'linear-gradient(90deg, #F59E0B, #FF6B9D)'; // Orange Warning
+    } else {
+      timerBarEl.style.background = 'linear-gradient(90deg, #6C63FF, #FF6B9D)'; // Normal
+    }
+  }
+  
+  // 실시간 예상 획득 점수 계산 및 표시
+  const scoreTextEl = document.getElementById('gameScoreText');
+  if (scoreTextEl) {
+    const currentEstimate = 1000 + (SICHUAN.timeLeft * 10) + (SICHUAN.shufflesLeft * 500);
+    scoreTextEl.textContent = currentEstimate.toLocaleString();
+  }
+}
+
+function handleSichuanGameOver() {
+  if (SICHUAN.timerId) {
+    clearInterval(SICHUAN.timerId);
+    SICHUAN.timerId = null;
+  }
+  
+  // 게임 오버 상태를 결과화면 요소를 재활용해서 노출
+  document.getElementById('gamePlay').style.display = 'none';
+  document.getElementById('gameResult').style.display = 'block';
+  
+  document.getElementById('gameResultTitle').textContent = '아쉽게도 시간 종료! ⏰';
+  document.getElementById('gameResultTitle').style.color = 'var(--err)';
+  
+  document.getElementById('gameResultText').innerHTML = `
+    제한 시간 5분이 지났어요.<br>
+    <span style="color: var(--muted); font-size: 13px;">조금만 더 빠르고 신속하게 짝을 찾으면 성공할 수 있어요!<br>다시 멋지게 도전해볼까요? 💪</span>
+  `;
+  
+  const finishBtn = document.querySelector('#gameResult button');
+  if (finishBtn) {
+    finishBtn.textContent = '다시 도전해볼래요! 🔄';
+    finishBtn.onclick = () => {
+      document.getElementById('gameResult').style.display = 'none';
+      document.getElementById('gamePlay').style.display = 'block';
+      initSichuanGame();
+    };
+  }
 }
 
 function renderSichuanBoard() {
@@ -1411,6 +1560,8 @@ function clickSichuanTile(r, c) {
 }
 
 function shuffleSichuan() {
+  if (SICHUAN.shufflesLeft <= 0) return;
+  
   const remaining = [];
   for (let r = 1; r <= ROWS; r++) {
     for (let c = 1; c <= COLS; c++) {
@@ -1434,6 +1585,18 @@ function shuffleSichuan() {
   }
   
   SICHUAN.selected = null;
+  
+  // 섞기 카운트 차감 및 버튼 UI 비활성화
+  SICHUAN.shufflesLeft--;
+  const shuffleBtn = document.getElementById('sichuanShuffleBtn');
+  if (shuffleBtn) {
+    shuffleBtn.textContent = `🔀 섞기 (${SICHUAN.shufflesLeft})`;
+    if (SICHUAN.shufflesLeft <= 0) {
+      shuffleBtn.disabled = true;
+      shuffleBtn.style.background = '#9CA3AF'; // 회색조 비활성화
+    }
+  }
+  
   renderSichuanBoard();
 }
 
@@ -1549,9 +1712,60 @@ function findPath(r1, c1, r2, c2, grid) {
 }
 
 function endGame(){
+  // 타이머 중지
+  if (SICHUAN.timerId) {
+    clearInterval(SICHUAN.timerId);
+    SICHUAN.timerId = null;
+  }
+  
+  // 상세 보너스 및 점수 계산
+  const baseScore = 1000;
+  const timeBonus = SICHUAN.timeLeft * 10;
+  const shuffleBonus = SICHUAN.shufflesLeft * 500;
+  const totalScore = baseScore + timeBonus + shuffleBonus;
+  
+  // 남은 시간 포맷팅
+  const minutes = Math.floor(SICHUAN.timeLeft / 60);
+  const seconds = SICHUAN.timeLeft % 60;
+  const timeStr = `${String(minutes).padStart(2, '0')}분 ${String(seconds).padStart(2, '0')}초`;
+  
   document.getElementById('gamePlay').style.display='none';
   document.getElementById('gameResult').style.display='block';
-  document.getElementById('gameResultText').innerHTML=`사천성 퍼즐을 완벽하게 해결했어요!<br><strong style="font-size: 15px; color: var(--pri);">${SICHUAN.child.name}의 멋진 집중력 칭찬해요! 🥳</strong>`;
+  
+  document.getElementById('gameResultTitle').textContent = '최고의 지혜왕 탄생! 🏆';
+  document.getElementById('gameResultTitle').style.color = '#F59E0B';
+  
+  document.getElementById('gameResultText').innerHTML = `
+    사천성 퍼즐을 완벽하게 정복했어요!<br>
+    <strong style="font-size: 15px; color: var(--pri);">${SICHUAN.child.name}의 멋진 집중력 칭찬해요! 🥳</strong>
+    
+    <div style="margin-top: 16px; padding: 12px; background: #F3F4F6; border-radius: 12px; text-align: left; font-size: 13px; line-height: 1.6;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: var(--muted);">기본 점수</span>
+        <span style="font-weight: 700; color: var(--txt);">1,000점</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: var(--muted);">시간 보너스 (남은 시간 ${timeStr})</span>
+        <span style="font-weight: 700; color: var(--ok);">+${timeBonus.toLocaleString()}점</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span style="color: var(--muted);">섞기 보너스 (남은 섞기 ${SICHUAN.shufflesLeft}회)</span>
+        <span style="font-weight: 700; color: var(--pri);">+${shuffleBonus.toLocaleString()}점</span>
+      </div>
+      <hr style="border: none; border-top: 1.5px dashed var(--bdr); margin: 8px 0;">
+      <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 900;">
+        <span style="color: var(--txt);">최종 획득 점수</span>
+        <span style="color: #F59E0B;">${totalScore.toLocaleString()}점 🌟</span>
+      </div>
+    </div>
+  `;
+  
+  // 버튼 콜백 리셋 (혹시 게임오버에서 다시 도전하기를 세팅했을 수 있으므로)
+  const finishBtn = document.querySelector('#gameResult button');
+  if (finishBtn) {
+    finishBtn.textContent = '참 잘했어요! 완료 🎊';
+    finishBtn.onclick = finishGame;
+  }
 }
 
 function finishGame(){

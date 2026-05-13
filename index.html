@@ -1475,11 +1475,8 @@ function getSichuanRankings(targetMonth) {
     return { child: c, accumulatedScore, highScore, gamesCount };
   });
   
-  if (targetMonth === null) {
-    return results.sort((a, b) => b.highScore - a.highScore);
-  } else {
-    return results.sort((a, b) => b.accumulatedScore - a.accumulatedScore);
-  }
+  // Rank by highest single game score (개별 최고 점수)
+  return results.sort((a, b) => b.highScore - a.highScore);
 }
 
 function renderSichuanRankings() {
@@ -1500,7 +1497,7 @@ function renderSichuanRankings() {
   const listContainer = document.getElementById('sichuanRankingsList');
   const actionArea = document.getElementById('rankingsActionArea');
   
-  const hasData = ranks.some(r => (activeRankingsTab === 'allTime' ? r.highScore : r.accumulatedScore) > 0);
+  const hasData = ranks.some(r => r.highScore > 0);
   
   if (!hasData) {
     listContainer.innerHTML = `
@@ -1518,16 +1515,9 @@ function renderSichuanRankings() {
     const isMe = index === curChildIdx;
     let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
     
-    let scoreText = '';
-    let subtext = '';
-    
-    if (activeRankingsTab === 'allTime') {
-      scoreText = `${item.highScore.toLocaleString()}점`;
-      subtext = `누적 ${item.accumulatedScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
-    } else {
-      scoreText = `${item.accumulatedScore.toLocaleString()}점`;
-      subtext = `최고 ${item.highScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
-    }
+    // 개별 최고 점수를 전면 스코어로 표시하고, 누적 점수 및 플레이 횟수를 서브로 표시
+    const scoreText = `${item.highScore.toLocaleString()}점`;
+    const subtext = `누적 ${item.accumulatedScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
     
     html += `
       <div class="rank-item${isMe ? ' is-me' : ''}">
@@ -1575,9 +1565,9 @@ function checkSichuanChampionOnLoad() {
 
 function showSichuanChampion(targetMonth, mk, isManual) {
   const ranks = getSichuanRankings(targetMonth);
-  const best = ranks.sort((a, b) => b.accumulatedScore - a.accumulatedScore)[0];
+  const best = ranks[0]; // Already sorted by highScore!
   
-  if (!best || best.accumulatedScore === 0) {
+  if (!best || best.highScore === 0) {
     if (isManual) {
       alert('전달 사천성 플레이 기록이 없어요! 루틴을 완료하고 게임을 즐겨보세요 😊');
     }
@@ -1604,7 +1594,7 @@ function showSichuanChampion(targetMonth, mk, isManual) {
   if (nameEl) nameEl.textContent = best.child.name;
   
   const scoreEl = document.getElementById('sichuanChampionScore');
-  if (scoreEl) scoreEl.textContent = `${best.accumulatedScore.toLocaleString()}`;
+  if (scoreEl) scoreEl.textContent = `${best.highScore.toLocaleString()}`;
   
   spawnSichuanConfetti();
   

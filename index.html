@@ -837,6 +837,9 @@ textarea.form-input { resize: none; line-height: 1.7; }
   <div class="rankings-footer">
     <div>꾸준한 루틴 완료가 지혜왕의 지름길! 😉</div>
     <div id="rankingsActionArea"></div>
+    <button class="btn-sec neutral" style="margin-top: 6px; font-size: 10px; padding: 4px 8px; width: auto; align-self: center; border-radius: 100px; cursor: pointer;" onclick="resetSichuanScoresWithPassword()">
+      🔄 사천성 점수 초기화
+    </button>
   </div>
 </div>
 
@@ -2343,6 +2346,28 @@ function endGame(){
   const totalScore = baseScore + timeBonus + shuffleBonus;
   SICHUAN.score = totalScore;
   
+  // 최고점 비교 및 즉시 저장
+  if (!SICHUAN.child.gamesPlayed) SICHUAN.child.gamesPlayed = {};
+  const currentVal = SICHUAN.child.gamesPlayed[SICHUAN.dateKey];
+  let currentHighScore = 0;
+  if (typeof currentVal === 'object' && currentVal !== null) {
+    currentHighScore = currentVal.score || 0;
+  } else if (currentVal === true) {
+    currentHighScore = 1000;
+  }
+  
+  let isNewRecord = false;
+  if (totalScore > currentHighScore) {
+    isNewRecord = true;
+    SICHUAN.child.gamesPlayed[SICHUAN.dateKey] = {
+      score: totalScore,
+      date: SICHUAN.dateKey,
+      timestamp: Date.now()
+    };
+    saveState();
+    render();
+  }
+  
   // 남은 시간 포맷팅
   const minutes = Math.floor(SICHUAN.timeLeft / 60);
   const seconds = SICHUAN.timeLeft % 60;
@@ -2376,6 +2401,9 @@ function endGame(){
         <span style="color: var(--txt);">최종 획득 점수</span>
         <span style="color: #F59E0B;">${totalScore.toLocaleString()}점 🌟</span>
       </div>
+      <div style="margin-top: 8px; font-size: 12px; font-weight: 700; color: ${isNewRecord ? 'var(--ok)' : 'var(--muted)'}; text-align: right;">
+        ${isNewRecord ? '🎉 최고 점수 갱신! (자동 저장 완료)' : `(기존 최고점 ${currentHighScore.toLocaleString()}점 유지)`}
+      </div>
     </div>
   `;
   
@@ -2387,14 +2415,23 @@ function endGame(){
   }
 }
 
+function resetSichuanScoresWithPassword() {
+  const pwd = prompt('사천성 점수를 초기화하려면 비밀번호를 입력해주세요 🔒');
+  if (pwd === '0418') {
+    if (confirm('모든 자녀의 사천성 점수 기록이 초기화됩니다. 정말 진행하시겠습니까?')) {
+      state.children.forEach(c => {
+        c.gamesPlayed = {};
+      });
+      saveState();
+      renderSichuanRankings();
+      alert('사천성 점수가 성공적으로 초기화되었습니다. 🔄');
+    }
+  } else if (pwd !== null) {
+    alert('비밀번호가 올바르지 않습니다. ❌');
+  }
+}
+
 function finishGame(){
-  if(!SICHUAN.child.gamesPlayed) SICHUAN.child.gamesPlayed={};
-  SICHUAN.child.gamesPlayed[SICHUAN.dateKey] = {
-    score: SICHUAN.score || 1000,
-    date: SICHUAN.dateKey,
-    timestamp: Date.now()
-  };
-  saveState();
   closeGameModal();
   render();
 }

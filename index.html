@@ -646,6 +646,160 @@ textarea.form-input { resize: none; line-height: 1.7; }
   .log-del { opacity: 0; transition: opacity .15s; }
   .log-item:hover .log-del { opacity: 1; }
 }
+
+/* ════════ 사천성 랭킹 패널 ════════ */
+.rankings-panel {
+  position: fixed;
+  top: 68px;
+  right: 16px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid var(--bdr);
+  border-radius: 16px;
+  box-shadow: var(--sh-lg);
+  padding: 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: rank-in 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+@keyframes rank-in {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.rankings-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px dashed var(--bdr);
+  padding-bottom: 8px;
+}
+.rankings-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--pri);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rankings-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--muted);
+}
+.rankings-tabs {
+  display: flex;
+  background: #F3F4F6;
+  border-radius: 100px;
+  padding: 2px;
+  gap: 2px;
+}
+.rankings-tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 5px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rankings-tab-btn.active {
+  background: white;
+  color: var(--pri);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: white;
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.15s;
+}
+.rank-item.is-me {
+  border-color: var(--pri);
+  background: var(--pri-l);
+}
+.rank-badge {
+  font-size: 14px;
+  font-weight: 900;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rank-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--bdr);
+}
+.rank-details {
+  flex: 1;
+  min-width: 0;
+}
+.rank-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.rank-name {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-score {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--warn);
+}
+.rank-subtext {
+  font-size: 9px;
+  color: var(--muted);
+}
+.rank-empty {
+  text-align: center;
+  padding: 24px 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.rankings-footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  border-top: 1.5px dashed var(--bdr);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 </style>
 </head>
 <body>
@@ -661,8 +815,29 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
     <button class="hbtn" onclick="openLadder()" title="사다리 타기">🎰</button>
     <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
+    <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
   </div>
 </header>
+
+<!-- 사천성 랭킹 패널 -->
+<div class="rankings-panel" id="sichuanRankingsPanel" style="display: none;">
+  <div class="rankings-hdr">
+    <span class="rankings-title">🏆 사천성 집중력 랭킹</span>
+    <button class="rankings-close" onclick="toggleSichuanRankings()">✕</button>
+  </div>
+  <div class="rankings-tabs">
+    <button class="rankings-tab-btn active" id="tab-thisMonth" onclick="switchRankingsTab('thisMonth')">이번달</button>
+    <button class="rankings-tab-btn" id="tab-lastMonth" onclick="switchRankingsTab('lastMonth')">지난달</button>
+    <button class="rankings-tab-btn" id="tab-allTime" onclick="switchRankingsTab('allTime')">역대 최고</button>
+  </div>
+  <div class="rankings-list" id="sichuanRankingsList">
+    <!-- Dynamically loaded -->
+  </div>
+  <div class="rankings-footer">
+    <div>꾸준한 루틴 완료가 지혜왕의 지름길! 😉</div>
+    <div id="rankingsActionArea"></div>
+  </div>
+</div>
 
 <!-- ───── 메인 ───── -->
 <main class="main">
@@ -807,6 +982,22 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
 </div>
 
+<!-- 사천성 지혜왕 팝업 — 별도 overlay 클래스 -->
+<div class="king-overlay" id="sichuanChampionModal" style="display:none; z-index: 1500;">
+  <div class="king-modal" style="background: linear-gradient(160deg, #1E3A8A, #3B82F6);">
+    <div id="sichuanConfettiBox" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+    <div class="king-crown" style="font-size: 60px;">🏆🐼👑</div>
+    <div class="king-title" style="color: #FDE68A;">이달의 사천성 지혜왕!</div>
+    <div class="king-month" id="sichuanChampionMonth"></div>
+    <div class="king-av"    id="sichuanChampionAv"></div>
+    <div class="king-name"  id="sichuanChampionName"></div>
+    <div class="king-score" id="sichuanChampionScore" style="font-size: 30px; font-weight: 900; color: #FDE68A;"></div>
+    <div class="king-slabel">점 달성! 최고의 집중력이에요! 🎉</div>
+    <div class="king-stars">⭐⭐⭐⭐⭐</div>
+    <button class="king-close" style="background: #FDE68A; color: #1E1B4B; font-weight: 900;" onclick="closeSichuanChampion()">🎊 축하해요! 닫기</button>
+  </div>
+</div>
+
 <!-- 독서 질문 -->
 <div class="overlay" id="readingQModal" style="display:none;">
   <div class="modal" style="max-width:400px;">
@@ -902,7 +1093,7 @@ const CHILD_COLORS=['#6C63FF','#FF6B9D','#22C55E','#F59E0B','#3B82F6','#EF4444',
 const DN=['일','월','화','수','목','금','토'];
 
 // ════════ 상태 ════════
-function defaultState(){return{routines:[{id:'r1',icon:'🦷',name:'양치하기',time:'morning'},{id:'r2',icon:'📖',name:'독서 20분',time:'evening'},{id:'r3',icon:'✏️',name:'숙제하기',time:'afternoon'},{id:'r4',icon:'😴',name:'일찍 자기',time:'night'}],children:[{id:'c1',name:'지수',avatar:'👧',color:'#6C63FF',checks:{},ladderUsed:{}}],kingShown:{},readingLogs:[]};}
+function defaultState(){return{routines:[{id:'r1',icon:'🦷',name:'양치하기',time:'morning'},{id:'r2',icon:'📖',name:'독서 20분',time:'evening'},{id:'r3',icon:'✏️',name:'숙제하기',time:'afternoon'},{id:'r4',icon:'😴',name:'일찍 자기',time:'night'}],children:[{id:'c1',name:'지수',avatar:'👧',color:'#6C63FF',checks:{},ladderUsed:{}}],kingShown:{},sichuanKingShown:{},readingLogs:[]};}
 function oldUtcKeyToLocalKey(s) {
   try {
     const parts = s.split('-');
@@ -966,6 +1157,7 @@ function loadState(){
     if(!s.children||!s.children.length) s.children=defaultState().children;
     if(!s.readingLogs) s.readingLogs=[];
     if(!s.kingShown)   s.kingShown={};
+    if(!s.sichuanKingShown) s.sichuanKingShown={};
     s.children.forEach(c=>{
       if(!c.checks)     c.checks={};
       if(!c.ladderUsed) c.ladderUsed={};
@@ -1038,6 +1230,7 @@ function render(){
     renderTabs();renderSummary();renderStreaks();
     renderWeekLabel();renderMatrix();renderProgress();
     checkKingOnLoad();
+    checkSichuanChampionOnLoad();
   }catch(e){
     console.error('render error:',e);
     // 상태 초기화 후 재시도
@@ -1223,6 +1416,215 @@ function showKing(targetMonth,mk){
 function closeKing(){document.getElementById('kingModal').style.display='none';}
 function spawnConfetti(){const box=document.getElementById('confettiBox');box.innerHTML='';const cols=['#6C63FF','#FF6B9D','#FDE68A','#22C55E','#3B82F6','#F59E0B'];for(let i=0;i<36;i++){const p=document.createElement('div');p.className='cfp';p.style.cssText=`left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*1.5}s;animation-delay:${Math.random()*.8}s;`;box.appendChild(p);}}
 
+// ════════ 사천성 랭킹 & 지혜왕 ════════
+let activeRankingsTab = 'thisMonth';
+
+function toggleSichuanRankings() {
+  const panel = document.getElementById('sichuanRankingsPanel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'flex';
+    renderSichuanRankings();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function switchRankingsTab(tab) {
+  activeRankingsTab = tab;
+  renderSichuanRankings();
+}
+
+function getSichuanRankings(targetMonth) {
+  const results = state.children.map(c => {
+    let accumulatedScore = 0;
+    let highScore = 0;
+    let gamesCount = 0;
+    
+    if (c.gamesPlayed) {
+      Object.keys(c.gamesPlayed).forEach(k => {
+        const val = c.gamesPlayed[k];
+        if (!val) return;
+        
+        let matchesMonth = true;
+        if (targetMonth) {
+          const prefix = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}`;
+          matchesMonth = k.startsWith(prefix);
+        }
+        
+        if (matchesMonth) {
+          let score = 0;
+          if (typeof val === 'object' && val !== null) {
+            score = val.score || 0;
+          } else if (val === true) {
+            score = 1000; // legacy default
+          }
+          accumulatedScore += score;
+          highScore = Math.max(highScore, score);
+          gamesCount++;
+        }
+      });
+    }
+    return { child: c, accumulatedScore, highScore, gamesCount };
+  });
+  
+  if (targetMonth === null) {
+    return results.sort((a, b) => b.highScore - a.highScore);
+  } else {
+    return results.sort((a, b) => b.accumulatedScore - a.accumulatedScore);
+  }
+}
+
+function renderSichuanRankings() {
+  ['thisMonth', 'lastMonth', 'allTime'].forEach(tab => {
+    const btn = document.getElementById(`tab-${tab}`);
+    if (btn) btn.classList.toggle('active', tab === activeRankingsTab);
+  });
+  
+  let targetMonth = null;
+  const now = today();
+  if (activeRankingsTab === 'thisMonth') {
+    targetMonth = now;
+  } else if (activeRankingsTab === 'lastMonth') {
+    targetMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  }
+  
+  const ranks = getSichuanRankings(targetMonth);
+  const listContainer = document.getElementById('sichuanRankingsList');
+  const actionArea = document.getElementById('rankingsActionArea');
+  
+  const hasData = ranks.some(r => (activeRankingsTab === 'allTime' ? r.highScore : r.accumulatedScore) > 0);
+  
+  if (!hasData) {
+    listContainer.innerHTML = `
+      <div class="rank-empty">
+        <div style="font-size: 24px; margin-bottom: 4px;">🐼</div>
+        아직 기록이 없어요.<br>오늘 루틴을 달성하고<br>사천성 점수를 올려보세요!
+      </div>
+    `;
+    actionArea.innerHTML = '';
+    return;
+  }
+  
+  let html = '';
+  ranks.forEach((item, index) => {
+    const isMe = index === curChildIdx;
+    let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
+    
+    let scoreText = '';
+    let subtext = '';
+    
+    if (activeRankingsTab === 'allTime') {
+      scoreText = `${item.highScore.toLocaleString()}점`;
+      subtext = `누적 ${item.accumulatedScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
+    } else {
+      scoreText = `${item.accumulatedScore.toLocaleString()}점`;
+      subtext = `최고 ${item.highScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
+    }
+    
+    html += `
+      <div class="rank-item${isMe ? ' is-me' : ''}">
+        <div class="rank-badge">${badge}</div>
+        <div class="rank-av" style="background:${item.child.color}20; border-color:${item.child.color}; color:${item.child.color}; font-weight:700;">${item.child.avatar}</div>
+        <div class="rank-details">
+          <div class="rank-name-row">
+            <span class="rank-name" style="${isMe ? 'color:var(--pri); font-weight:900;' : ''}">${item.child.name}</span>
+            <span class="rank-score">${scoreText}</span>
+          </div>
+          <div class="rank-subtext">${subtext}</div>
+        </div>
+      </div>
+    `;
+  });
+  listContainer.innerHTML = html;
+  
+  if (activeRankingsTab === 'lastMonth') {
+    actionArea.innerHTML = `
+      <button class="btn-pri" style="margin-top: 8px; padding: 6px 12px; font-size: 11px; width: auto; border-radius: 100px;" onclick="replaySichuanChampionCelebration()">
+        🏆 전월 1등 시상식 보기 👑
+      </button>
+    `;
+  } else {
+    actionArea.innerHTML = '';
+  }
+}
+
+function replaySichuanChampionCelebration() {
+  const now = today();
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const pk = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  showSichuanChampion(prevMonthDate, pk, true);
+}
+
+function checkSichuanChampionOnLoad() {
+  const now = today();
+  const isFirst = now.getDate() === 1;
+  const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const pk = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2, '0')}`;
+  if (isFirst && !state.sichuanKingShown[pk] && state.children.length > 0) {
+    showSichuanChampion(pm, pk, false);
+  }
+}
+
+function showSichuanChampion(targetMonth, mk, isManual) {
+  const ranks = getSichuanRankings(targetMonth);
+  const best = ranks.sort((a, b) => b.accumulatedScore - a.accumulatedScore)[0];
+  
+  if (!best || best.accumulatedScore === 0) {
+    if (isManual) {
+      alert('전달 사천성 플레이 기록이 없어요! 루틴을 완료하고 게임을 즐겨보세요 😊');
+    }
+    return;
+  }
+  
+  document.getElementById('sichuanChampionMonth').textContent = `${targetMonth.getFullYear()}년 ${targetMonth.getMonth() + 1}월 사천성 지혜왕 🏆`;
+  const av = document.getElementById('sichuanChampionAv');
+  if (av) {
+    av.textContent = best.child.avatar;
+    av.style.background = best.child.color + '30';
+    av.style.border = `4px solid #FDE68A`;
+    av.style.width = '72px';
+    av.style.height = '72px';
+    av.style.borderRadius = '50%';
+    av.style.display = 'flex';
+    av.style.alignItems = 'center';
+    av.style.justifyContent = 'center';
+    av.style.fontSize = '32px';
+    av.style.margin = '0 auto 10px';
+  }
+  
+  const nameEl = document.getElementById('sichuanChampionName');
+  if (nameEl) nameEl.textContent = best.child.name;
+  
+  const scoreEl = document.getElementById('sichuanChampionScore');
+  if (scoreEl) scoreEl.textContent = `${best.accumulatedScore.toLocaleString()}`;
+  
+  spawnSichuanConfetti();
+  
+  if (!isManual) {
+    state.sichuanKingShown[mk] = true;
+    saveState();
+  }
+  
+  document.getElementById('sichuanChampionModal').style.display = 'flex';
+}
+
+function closeSichuanChampion() {
+  document.getElementById('sichuanChampionModal').style.display = 'none';
+}
+
+function spawnSichuanConfetti() {
+  const box = document.getElementById('sichuanConfettiBox');
+  if (!box) return;
+  box.innerHTML = '';
+  const cols = ['#3B82F6', '#6C63FF', '#FF6B9D', '#FDE68A', '#22C55E', '#F59E0B'];
+  for (let i = 0; i < 36; i++) {
+    const p = document.createElement('div');
+    p.className = 'cfp';
+    p.style.cssText = `left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*1.5}s;animation-delay:${Math.random()*.8}s;`;
+    box.appendChild(p);
+  }
+}
+
 // ════════ 독서 ════════
 function openReadingQuestion(child,dateKey){rqCtx={child,dateKey};document.getElementById('rqSubtext').textContent=`${child.name}! 오늘 읽은 책에서 배운 점을 적어봐요 ✨`;document.getElementById('rqMemoInput').value='';document.getElementById('readingQModal').style.display='flex';setTimeout(()=>document.getElementById('rqMemoInput').focus(),120);}
 function saveReadingMemo(){const memo=document.getElementById('rqMemoInput').value.trim();if(!memo){alert('내용을 입력해주세요 😊');return;}const{child,dateKey}=rqCtx;state.readingLogs.unshift({id:'log'+Date.now(),childId:child.id,childName:child.name,childAvatar:child.avatar,childColor:child.color,date:dateKey,memo});saveState();closeModal('readingQModal');const rt=allR().find(r=>r.name.includes('독서')||r.name.includes('읽'));if(rt)checkStreakReward(child,rt.id);}
@@ -1264,7 +1666,8 @@ function goToday(){weekStart=getWeekStart(new Date());render();}
 function closeModal(id){document.getElementById(id).style.display='none';}
 document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o && o.id !== 'gameModal')o.style.display='none';});});
 document.getElementById('kingModal').addEventListener('click',e=>{if(e.target===document.getElementById('kingModal'))closeKing();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>{if(o.id !== 'gameModal') o.style.display='none';});closeKing();}});
+document.getElementById('sichuanChampionModal').addEventListener('click',e=>{if(e.target===document.getElementById('sichuanChampionModal'))closeSichuanChampion();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>{if(o.id !== 'gameModal') o.style.display='none';});closeKing();closeSichuanChampion();const p = document.getElementById('sichuanRankingsPanel'); if(p) p.style.display='none';}});
 
 // ════════ 모바일 스와이프 닫기 ════════
 document.querySelectorAll('.overlay .modal').forEach(modal=>{
@@ -1857,6 +2260,7 @@ function endGame(){
   const timeBonus = SICHUAN.timeLeft * 10;
   const shuffleBonus = SICHUAN.shufflesLeft * 500;
   const totalScore = baseScore + timeBonus + shuffleBonus;
+  SICHUAN.score = totalScore;
   
   // 남은 시간 포맷팅
   const minutes = Math.floor(SICHUAN.timeLeft / 60);
@@ -1904,7 +2308,11 @@ function endGame(){
 
 function finishGame(){
   if(!SICHUAN.child.gamesPlayed) SICHUAN.child.gamesPlayed={};
-  SICHUAN.child.gamesPlayed[SICHUAN.dateKey]=true;
+  SICHUAN.child.gamesPlayed[SICHUAN.dateKey] = {
+    score: SICHUAN.score || 1000,
+    date: SICHUAN.dateKey,
+    timestamp: Date.now()
+  };
   saveState();
   closeGameModal();
   render();

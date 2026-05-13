@@ -813,7 +813,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
   <div class="hbtns">
     <button class="hbtn" onclick="goToday()" title="오늘">🗓</button>
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
-    <button class="hbtn" onclick="openLadder()" title="사다리 타기">🎰</button>
+    <button class="hbtn" onclick="openLadderWithPassword()" title="사다리 타기">🎰</button>
     <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
     <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
   </div>
@@ -1332,6 +1332,14 @@ function checkStreakReward(child,routineId){
 }
 
 // ════════ 사다리 ════════
+function openLadderWithPassword() {
+  const pwd = prompt('사다리 타기를 시작하려면 비밀번호를 입력해주세요 🔒');
+  if (pwd === '0418') {
+    openLadder();
+  } else if (pwd !== null) {
+    alert('비밀번호가 올바르지 않습니다. ❌');
+  }
+}
 let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0};
 function openLadder(streak,routineName){
   LDR.streak=streak||0;LDR.userSlot=-1;LDR.running=false;LDR.numCols=5;LDR.userChild=curChild();

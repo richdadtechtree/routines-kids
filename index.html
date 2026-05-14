@@ -1158,6 +1158,31 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
 </div>
 
+<!-- 쿠폰 이미지 보기/저장 모달 -->
+<div class="overlay" id="couponViewModal" style="display:none; z-index: 3000;">
+  <div class="modal" style="max-width: 520px; width: 95%; text-align: center; padding: 24px;">
+    <button class="modal-x" onclick="closeModal('couponViewModal')">✕</button>
+    <div style="font-size: 40px; margin-bottom: 8px;">📸</div>
+    <div class="modal-title" style="font-size: 20px; color: var(--pri);">당첨 쿠폰 발급 완료!</div>
+    <div class="modal-sub" style="margin-top: 4px; font-size: 13px;">
+      아래 이미지를 <strong>길게 누르거나(터치) 우클릭</strong>하여 <strong>[사진 앱에 저장]</strong>을 선택해주세요.
+    </div>
+    
+    <div style="margin: 16px 0; border: 2px solid var(--bdr); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+      <img id="couponResultImg" src="" style="width: 100%; display: block; height: auto;" alt="당첨 쿠폰">
+    </div>
+    
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <button class="btn-pri" style="flex: 1; padding: 12px; font-size: 15px; background: #6C63FF;" onclick="shareCoupon()">
+        📲 공유 / 저장하기
+      </button>
+      <button class="btn-sec" style="flex: 1; padding: 12px; font-size: 15px;" onclick="closeModal('couponViewModal')">
+        닫기
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- 사천성 미니게임 모달 -->
 <div class="overlay" id="gameModal" style="display:none; z-index: 2000;">
   <div class="modal" style="max-width: 720px; width: 95%; text-align: center; overflow: hidden; padding: 24px;">
@@ -1618,6 +1643,7 @@ function animPath(startCol,yLevels,onDone){
 }
 function animMove(el,tx,ty,ms,cb){const fx=parseFloat(el.getAttribute('cx')),fy=parseFloat(el.getAttribute('cy')),s=performance.now();function fr(now){const t=Math.min((now-s)/ms,1),e=t<.5?2*t*t:-1+(4-2*t)*t;el.setAttribute('cx',fx+(tx-fx)*e);el.setAttribute('cy',fy+(ty-fy)*e);if(t<1)requestAnimationFrame(fr);else{el.setAttribute('cx',tx);el.setAttribute('cy',ty);cb&&cb();}}requestAnimationFrame(fr);}
 function revealRewards(winCol,winReward){LDR.rewards.forEach((r,i)=>{const b=document.getElementById(`rb${i}`);if(!b)return;setTimeout(()=>{b.querySelector('.ri').textContent=r.icon;b.querySelector('.rn').textContent=r.name.replace('\n',' ');if(i===winCol)b.classList.add('win');},i*120);});}
+let curCouponDataUrl = '';
 function downloadCoupon(){
   const canvas=document.createElement('canvas');
   canvas.width=800;canvas.height=500;
@@ -1640,9 +1666,24 @@ function downloadCoupon(){
   ctx.fillStyle='#6B7280';ctx.font='20px sans-serif';ctx.fillText(`발급일: ${todayStr}`,400,380);
   ctx.fillStyle='#374151';ctx.font='bold 22px sans-serif';
   ctx.fillText('참 잘했어요! 보호자에게 보여주고 보상을 받으세요 🎁',400,425);
-  const link=document.createElement('a');
-  link.download=`${curCoupon.childName}_${curCoupon.rewardName}.png`;
-  link.href=canvas.toDataURL('image/png');link.click();
+  curCouponDataUrl = canvas.toDataURL('image/png');
+  document.getElementById('couponResultImg').src = curCouponDataUrl;
+  document.getElementById('couponViewModal').style.display = 'flex';
+  try {
+    const link=document.createElement('a');
+    link.download=`${curCoupon.childName}_${curCoupon.rewardName}.png`;
+    link.href=curCouponDataUrl; link.click();
+  } catch(e) {}
+}
+function shareCoupon() {
+  if (navigator.share) {
+    fetch(curCouponDataUrl).then(res=>res.blob()).then(blob=>{
+      const file = new File([blob], `${curCoupon.childName}_${curCoupon.rewardName}.png`, { type: 'image/png' });
+      navigator.share({ title: '루틴 완성 특별 쿠폰 🎁', text: `${curCoupon.childName}의 특별 보상 쿠폰입니다!`, files: [file] }).catch(e=>console.log(e));
+    }).catch(e=>{});
+  } else {
+    alert('이미지를 길게 누르거나 우클릭하여 저장해주세요 📸');
+  }
 }
 
 // ════════ 루틴왕 ════════

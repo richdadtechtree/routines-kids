@@ -492,12 +492,18 @@ textarea.form-input { resize: none; line-height: 1.7; }
 .log-empty .ei { font-size: 34px; margin-bottom: 9px; }
 
 /* ════════ 사천성 미니게임 ════════ */
+#gameModal .modal {
+  max-width: 760px !important;
+  width: 95% !important;
+  padding: 24px !important;
+}
+
 .sichuan-board {
   position: relative;
   display: grid;
   gap: 6px;
-  width: 100%;
-  max-width: 680px;
+  width: 100% !important;
+  max-width: 720px !important;
   background: rgba(255, 255, 255, 0.4);
   border-radius: 16px;
   box-sizing: border-box;
@@ -513,8 +519,8 @@ textarea.form-input { resize: none; line-height: 1.7; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  min-height: 48px;
+  font-size: 32px !important;
+  min-height: 54px !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.06);
   transition: all 0.15s;
   user-select: none;
@@ -1840,6 +1846,10 @@ function checkMiniGameTrigger(child,dateKey){
   
   if(targetCompleted){
     if(child.gamesPlayed[dateKey]) return;
+    
+    child.gamesPlayed[dateKey] = { opened: true, score: 0 };
+    saveState();
+    
     setTimeout(()=>{
       openGameModal(child,dateKey);
     },550);

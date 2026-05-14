@@ -603,96 +603,119 @@ function drawPlayer(ctx, p) {
   const legSwing = jump ? 0 : Math.sin(p.legAnim * 0.28) * 10;
   const legW = 7, legH = 14;
 
-  // 왼다리
+  // 왼다리 (메탈릭 레드)
   ctx.save();
-  ctx.fillStyle = '#4466ff';
+  ctx.fillStyle = '#C81D25';
   ctx.beginPath();
   ctx.roundRect(cx - legW - 4, y + h - legH + legSwing, legW, legH, 3);
   ctx.fill();
-  // 왼발
-  ctx.fillStyle = '#ffe066';
+  // 왼발 (골드 포인트 & 추진부)
+  ctx.fillStyle = '#F1C40F';
   ctx.beginPath();
   ctx.roundRect(cx - legW - 6, y + h - 4 + legSwing, legW + 4, 6, 3);
   ctx.fill();
+  if (jump) {
+    // 발바닥 부스터 불꽃
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath(); ctx.arc(cx - legW - 3, y + h + 4, 3 + Math.random()*2, 0, Math.PI*2); ctx.fill();
+  }
   ctx.restore();
 
   // 오른다리
   ctx.save();
-  ctx.fillStyle = '#4466ff';
+  ctx.fillStyle = '#C81D25';
   ctx.beginPath();
   ctx.roundRect(cx + 4, y + h - legH - legSwing, legW, legH, 3);
   ctx.fill();
   // 오른발
-  ctx.fillStyle = '#ffe066';
+  ctx.fillStyle = '#F1C40F';
   ctx.beginPath();
   ctx.roundRect(cx + 2, y + h - 4 - legSwing, legW + 4, 6, 3);
   ctx.fill();
+  if (jump) {
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath(); ctx.arc(cx + 5, y + h + 4, 3 + Math.random()*2, 0, Math.PI*2); ctx.fill();
+  }
   ctx.restore();
 
-  // 몸통
-  ctx.fillStyle = '#334dff';
+  // 몸통 (아머 슈트)
+  ctx.fillStyle = '#C81D25';
   ctx.beginPath();
   ctx.roundRect(x + 4, y + h * 0.35, w - 8, h * 0.5, 6);
   ctx.fill();
 
-  // 팔 (달리기 시 흔들림)
-  const armSwing = jump ? -8 : Math.cos(p.legAnim * 0.28) * 7;
-  ctx.fillStyle = '#334dff';
-  // 왼팔
-  ctx.beginPath();
-  ctx.roundRect(x - 2, y + h * 0.38 + armSwing, 8, 5, 3);
-  ctx.fill();
-  // 오른팔
-  ctx.beginPath();
-  ctx.roundRect(x + w - 6, y + h * 0.38 - armSwing, 8, 5, 3);
-  ctx.fill();
+  // 허리 골드 라인 포인트
+  ctx.fillStyle = '#F1C40F';
+  ctx.fillRect(x + 6, y + h * 0.72, w - 12, 4);
 
-  // 머리
-  ctx.fillStyle = '#ffcc88';
+  // 아크 리액터 (가슴 중앙의 빛나는 원)
+  ctx.save();
+  ctx.fillStyle = '#00ffff';
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(cx + 2, y + h * 0.55, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(cx + 2, y + h * 0.55, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // 팔 (흔들림)
+  const armSwing = jump ? -8 : Math.cos(p.legAnim * 0.28) * 7;
+  // 왼팔 (레드 & 골드 어깨)
+  ctx.fillStyle = '#C81D25';
+  ctx.beginPath(); ctx.roundRect(x - 2, y + h * 0.38 + armSwing, 8, 12, 3); ctx.fill();
+  ctx.fillStyle = '#F1C40F'; ctx.fillRect(x - 2, y + h * 0.38 + armSwing, 8, 3);
+  
+  // 오른팔 (점프 시 앞으로 뻗으며 리펄서 건 발사 자세)
+  ctx.save();
+  ctx.fillStyle = '#C81D25';
+  if (jump) {
+    ctx.beginPath(); ctx.roundRect(x + w - 4, y + h * 0.35, 12, 6, 3); ctx.fill();
+    ctx.fillStyle = '#F1C40F'; ctx.fillRect(x + w - 4, y + h * 0.35, 3, 6);
+    // 리펄서 건 손바닥 불꽃
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath(); ctx.arc(x + w + 9, y + h * 0.38, 3 + Math.random()*2, 0, Math.PI*2); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.roundRect(x + w - 6, y + h * 0.38 - armSwing, 8, 12, 3); ctx.fill();
+    ctx.fillStyle = '#F1C40F'; ctx.fillRect(x + w - 6, y + h * 0.38 - armSwing, 8, 3);
+  }
+  ctx.restore();
+
+  // 헬멧 (머리 전체 레드)
+  ctx.fillStyle = '#C81D25';
   ctx.beginPath();
   ctx.arc(cx, y + h * 0.22, 13, 0, Math.PI * 2);
   ctx.fill();
 
-  // 눈
-  ctx.fillStyle = '#222';
+  // 안면 마스크 (골드 페이스플레이트)
+  ctx.fillStyle = '#F1C40F';
   ctx.beginPath();
-  ctx.arc(cx + 4, y + h * 0.18, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  // 눈 하이라이트
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(cx + 5, y + h * 0.16, 1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 입 (점프 시 :O, 달리기 시 :D)
-  ctx.strokeStyle = '#884422';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  if (jump) {
-    ctx.arc(cx + 2, y + h * 0.26, 3, 0, Math.PI * 2);
-  } else {
-    ctx.arc(cx + 2, y + h * 0.25, 3, 0, Math.PI);
-  }
-  ctx.stroke();
-
-  // 머리카락
-  ctx.fillStyle = '#3322aa';
-  ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.09, 11, 7, -0.1, Math.PI, Math.PI * 2);
-  ctx.fill();
-  // 앞머리 삐죽
-  ctx.beginPath();
-  ctx.moveTo(cx + 8, y + h * 0.11);
-  ctx.lineTo(cx + 14, y + h * 0.06);
-  ctx.lineTo(cx + 10, y + h * 0.16);
-  ctx.fillStyle = '#3322aa';
+  ctx.moveTo(cx - 7, y + h * 0.12);
+  ctx.lineTo(cx + 9, y + h * 0.12);
+  ctx.lineTo(cx + 11, y + h * 0.25);
+  ctx.lineTo(cx + 5, y + h * 0.32);
+  ctx.lineTo(cx - 5, y + h * 0.32);
+  ctx.lineTo(cx - 9, y + h * 0.25);
+  ctx.closePath();
   ctx.fill();
 
-  // 헬멧 바이저 (작은 선)
-  ctx.strokeStyle = '#5566ff';
+  // 눈 (빛나는 하늘색/흰색 슬릿)
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  ctx.fillRect(cx + 2, y + h * 0.18, 5, 2);
+  ctx.fillRect(cx - 4, y + h * 0.18, 3, 2);
+  ctx.restore();
+
+  // 입부분 슬릿 라인
+  ctx.strokeStyle = '#B7950B';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(cx, y + h * 0.22, 9, -0.8, 0.4);
+  ctx.moveTo(cx - 3, y + h * 0.28);
+  ctx.lineTo(cx + 5, y + h * 0.28);
   ctx.stroke();
 }
 

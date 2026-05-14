@@ -822,9 +822,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <button class="hbtn" onclick="goToday()" title="오늘">🗓</button>
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
     <button class="hbtn" onclick="openLadderWithPassword()" title="사다리 타기">🎰</button>
-    <button class="hbtn" onclick="openGameWithPassword()" title="사천성 게임">🐼</button>
-    <button class="hbtn" onclick="openJumpGameWithPassword()" title="점프 달리기">🚀</button>
-    <button class="hbtn" onclick="openDoggyGameWithPassword()" title="강아지 키우기">🐶</button>
+    <button class="hbtn" onclick="openManualGameSelectWithPassword()" title="미니게임 모음">🎮</button>
     <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
     <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
     <button class="hbtn" onclick="openBackupModal()" title="데이터 관리">💾</button>
@@ -1115,6 +1113,30 @@ textarea.form-input { resize: none; line-height: 1.7; }
       </button>
       <button class="btn-pri" style="height: 58px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #F59E0B;" onclick="selectManualLadder(true)">
         <span style="font-size: 24px;">👑</span> 프리미엄 보상 (15회 연속 라인업)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 수동 미니게임 선택 모달 -->
+<div class="overlay" id="manualGameSelectModal" style="display:none; z-index: 2500;">
+  <div class="modal" style="max-width: 420px; text-align: center; padding: 28px 24px;">
+    <button class="modal-x" onclick="closeModal('manualGameSelectModal')">✕</button>
+    <div style="font-size: 54px; margin-bottom: 12px; animation: bounce 1s infinite;">🎮</div>
+    <div class="modal-title" style="font-size: 22px; color: var(--pri);">미니게임 모음</div>
+    <div class="modal-sub" style="margin-top: 6px; font-size: 13px;">
+      플레이하고 싶은 미니게임을 선택해주세요 🌟
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 22px;">
+      <button class="btn-pri" style="height: 58px; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; background: #6C63FF;" onclick="selectManualGame('sichuan')">
+        <span style="font-size: 26px;">🐼</span> 사천성
+      </button>
+      <button class="btn-pri" style="height: 58px; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; background: #E53935;" onclick="selectManualGame('jump')">
+        <span style="font-size: 26px;">🚀</span> 점프 게임
+      </button>
+      <button class="btn-pri" style="height: 58px; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; background: #F59E0B;" onclick="selectManualGame('doggy')">
+        <span style="font-size: 26px;">🐶</span> 강아지 키우기
       </button>
     </div>
   </div>
@@ -1479,22 +1501,22 @@ function selectManualLadder(isSpecial) {
   closeModal('ladderSelectModal');
   openLadder(0, isSpecial ? '프리미엄 사다리' : '일반 사다리', null, isSpecial);
 }
-function openGameWithPassword() {
-  openPasswordModal('사천성 게임 🐼', '사천성 게임을 시작하려면 비밀번호를 입력해주세요 🔒', () => {
+function openManualGameSelectWithPassword() {
+  openPasswordModal('미니게임 모음 🎮', '게임을 시작하려면 비밀번호를 입력해주세요 🔒', () => {
+    document.getElementById('manualGameSelectModal').style.display = 'flex';
+  });
+}
+function selectManualGame(type) {
+  closeModal('manualGameSelectModal');
+  if (type === 'sichuan') {
     openGameModal(curChild(), toKey(today()));
-  });
-}
-function openJumpGameWithPassword() {
-  openPasswordModal('점프 달리기 🚀', '점프 달리기를 시작하려면 비밀번호를 입력해주세요 🔒', () => {
+  } else if (type === 'jump') {
     window.open('jump_runner_game.html', '_blank');
-  });
-}
-function openDoggyGameWithPassword() {
-  openPasswordModal('강아지 키우기 🐶', '강아지 키우기를 시작하려면 비밀번호를 입력해주세요 🔒', () => {
+  } else if (type === 'doggy') {
     const c = curChild();
     const cid = c ? c.id : 'default';
     window.open(`doggy_game.html?childId=${cid}`, '_blank');
-  });
+  }
 }
 let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0,routineId:null,isSpecial:false};
 let curCoupon={childName:'',rewardName:'',icon:''};

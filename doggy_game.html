@@ -64,9 +64,13 @@ body{
 .lv-badge{font-family:'Gaegu',cursive;font-size:11px;background:linear-gradient(130deg,#ffd166,#ff9a3c);color:#fff;border-radius:10px;padding:2px 9px;}
 .age-badge{font-family:'Gaegu',cursive;font-size:11px;background:linear-gradient(130deg,#74c0fc,#52b788);color:#fff;border-radius:10px;padding:2px 9px;}
 .hdr-right{display:flex;align-items:center;gap:8px;}
+.bgm-btn{font-family:'Gaegu',cursive;font-size:12px;background:linear-gradient(130deg,#f6ad55,#ed8936);color:#fff;border:none;border-radius:14px;padding:4px 10px;cursor:pointer;box-shadow:0 3px 8px rgba(237,137,54,.25);transition:all .14s;}
+.bgm-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(237,137,54,.4);}
+.bgm-btn:active{transform:scale(.95);}
 .next-day-btn{font-family:'Gaegu',cursive;font-size:12px;background:linear-gradient(130deg,#ff8fab,#c084fc);color:#fff;border:none;border-radius:14px;padding:4px 10px;cursor:pointer;box-shadow:0 3px 8px rgba(192,132,252,.25);transition:all .14s;}
 .next-day-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(192,132,252,.4);}
 .next-day-btn:active{transform:scale(.95);}
+.timer-pill{display:flex;align-items:center;gap:4px;font-family:'Gaegu',cursive;font-size:15px;color:#fff;background:linear-gradient(130deg,#ff6b6b,#ee5253);border-radius:18px;padding:4px 12px;box-shadow:0 2px 6px rgba(238,82,83,.3);}
 .food-pill{display:flex;align-items:center;gap:4px;font-family:'Gaegu',cursive;font-size:15px;color:#a07000;background:var(--yellow2);border:1.5px solid var(--yellow);border-radius:18px;padding:4px 12px;}
 
 /* 바디 */
@@ -232,7 +236,8 @@ body{
       <span class="age-badge" id="age-badge">아기 🍼 (1일차)</span>
     </div>
     <div class="hdr-right">
-      <button class="next-day-btn" onclick="nextDay()">하루 보내기 🌙</button>
+      <div class="timer-pill" id="play-timer">⏳ 04:00</div>
+      <button class="bgm-btn" id="bgm-btn" onclick="toggleBGM()">🎵 BGM 끄기</button>
       <div class="food-pill">🍖 <span id="food-n">0</span></div>
     </div>
   </div>
@@ -1506,45 +1511,186 @@ let actionLogs = []; // [{type, label, time}]
 let rafId = null;
 let prevBg = 'day';
 let bgRestoreTimer = null;
+let sessionStartTime = 0;
+
+// ════════════════════════════════════════════
+//  사운드 엔진 (Web Audio API)
+// ════════════════════════════════════════════
+let audioCtx = null;
+let bgmTimer = null;
+let bgmPlaying = true;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+const sfx = {
+  bark() {
+    const ctx = getAudioCtx(); if(!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(450, t); osc.frequency.exponentialRampToValueAtTime(180, t + 0.12);
+    gain.gain.setValueAtTime(0.18, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.12);
+    
+    const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+    osc2.type = 'triangle'; osc2.frequency.setValueAtTime(480, t + 0.16); osc2.frequency.exponentialRampToValueAtTime(200, t + 0.28);
+    gain2.gain.setValueAtTime(0.18, t + 0.16); gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.28);
+    osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(t + 0.16); osc2.stop(t + 0.28);
+  },
+  squeak() {
+    const ctx = getAudioCtx(); if(!ctx) return;
+    const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(1400, t + 0.08);
+    gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.08);
+  },
+  eat() {
+    const ctx = getAudioCtx(); if(!ctx) return;
+    [0, 0.15, 0.3].forEach((delay, i) => {
+      const t = ctx.currentTime + delay; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'square'; osc.frequency.setValueAtTime(500 + i*100, t); osc.frequency.exponentialRampToValueAtTime(300, t + 0.08);
+      gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+      osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.08);
+    });
+  },
+  fanfare() {
+    const ctx = getAudioCtx(); if(!ctx) return;
+    const notes = [261.63, 329.63, 392.00, 523.25];
+    notes.forEach((freq, i) => {
+      const t = ctx.currentTime + i * 0.14; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.15, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+      osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.35);
+    });
+  },
+  pop() {
+    const ctx = getAudioCtx(); if(!ctx) return;
+    const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(600, t + 0.05);
+    gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.05);
+  }
+};
+
+const bgmNotes = [261.63, 293.66, 329.63, 392.00, 329.63, 293.66, 392.00, 440.00, 392.00, 329.63, 293.66, 261.63];
+let noteIdx = 0;
+
+function startBGM() {
+  if (bgmTimer) clearInterval(bgmTimer);
+  bgmTimer = setInterval(() => {
+    if (!bgmPlaying) return;
+    const ctx = getAudioCtx(); if(!ctx) return;
+    const freq = bgmNotes[noteIdx];
+    noteIdx = (noteIdx + 1) % bgmNotes.length;
+    const t = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.035, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.38);
+  }, 400);
+}
+
+function toggleBGM() {
+  bgmPlaying = !bgmPlaying;
+  const btn = document.getElementById('bgm-btn');
+  if (btn) btn.textContent = bgmPlaying ? '🎵 BGM 끄기' : '🔇 BGM 켜기';
+  if (bgmPlaying) { getAudioCtx(); if(!bgmTimer) startBGM(); }
+}
+
+window.addEventListener('pointerdown', () => {
+  getAudioCtx();
+  if (!bgmTimer && bgmPlaying) startBGM();
+}, { once: true });
 
 // ════════════════════════════════════════════
 //  저장/불러오기 및 성장/배변 헬퍼
 // ════════════════════════════════════════════
-function save() { localStorage.setItem('dg_v4', JSON.stringify({gs, actionLogs})); }
+function getStorageKey() {
+  const params = new URLSearchParams(window.location.search);
+  const childId = params.get('childId') || 'default';
+  return 'dg_v4_' + childId;
+}
+
+function save() { localStorage.setItem(getStorageKey(), JSON.stringify({gs, actionLogs})); }
 function load() {
   try {
-    const d = JSON.parse(localStorage.getItem('dg_v4'));
+    const d = JSON.parse(localStorage.getItem(getStorageKey()));
     if (d) {
       if (d.gs) Object.assign(gs, d.gs);
       if (d.actionLogs) actionLogs = d.actionLogs.slice(-20);
     }
   } catch(e) {}
-  gs.ageDay = gs.ageDay || 1;
+  const now = Date.now();
+  gs.birthTime = gs.birthTime || now;
+  gs.lastStatTime = gs.lastStatTime || now;
+  gs.starvingStartTime = gs.starvingStartTime || null;
   gs.poops = gs.poops || [];
 }
 
+function getAgeDays() {
+  const diff = Date.now() - (gs.birthTime || Date.now());
+  return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+}
+
 function getGrowthStage() {
-  if (gs.ageDay <= 10) return { label: '아기 강아지 🍼', scaleMult: 0.65 };
-  if (gs.ageDay <= 20) return { label: '청소년 강아지 🐾', scaleMult: 0.85 };
+  const d = getAgeDays();
+  if (d <= 10) return { label: '아기 강아지 🍼', scaleMult: 0.65 };
+  if (d <= 20) return { label: '청소년 강아지 🐾', scaleMult: 0.85 };
   return { label: '성견 🦮', scaleMult: 1.1 };
 }
 
-function nextDay() {
-  gs.ageDay++;
-  if (gs.ageDay > 31) {
+function checkRealtimeStats() {
+  if (!gs.dog) return;
+  const now = Date.now();
+  const dt = now - gs.lastStatTime;
+  gs.lastStatTime = now;
+
+  const elTimer = document.getElementById('play-timer');
+  if (elTimer) {
+    const elapsed = now - sessionStartTime;
+    const remain = Math.max(0, 240000 - elapsed);
+    const m = Math.floor(remain / 60000).toString().padStart(2, '0');
+    const s = Math.floor((remain % 60000) / 1000).toString().padStart(2, '0');
+    elTimer.textContent = `⏳ ${m}:${s}`;
+    
+    if (remain <= 0) {
+      if (rafId) cancelAnimationFrame(rafId);
+      alert(`[낮잠 시간 💤]\n오늘 ${gs.name}와 신나게 놀았어요!\n이제 몽이가 피곤해서 낮잠을 자며 쉬어야 할 시간이에요 💤\n나중에 다시 만나러 와주세요!`);
+      document.getElementById('game-screen').classList.remove('active');
+      document.getElementById('select-screen').classList.add('active');
+      return;
+    }
+  }
+
+  const hungerLoss = dt * (100 / (48 * 60 * 60 * 1000));
+  gs.hunger = Math.max(0, gs.hunger - hungerLoss);
+
+  const generalLoss = dt * (100 / (36 * 60 * 60 * 1000));
+  gs.happy = Math.max(0, gs.happy - generalLoss);
+  gs.clean = Math.max(0, gs.clean - generalLoss);
+  gs.energy = Math.max(0, gs.energy - generalLoss);
+
+  if (gs.hunger <= 0) {
+    if (!gs.starvingStartTime) gs.starvingStartTime = now;
+    if (now - gs.starvingStartTime >= 24 * 60 * 60 * 1000) {
+      if (rafId) cancelAnimationFrame(rafId);
+      alert(`[무지개 다리 🌈]\n오랫동안 밥을 먹지 못한 ${gs.name}가 무지개 다리를 건넜어요...\n슬프지만 마음을 추스르고 새로운 강아지와 다시 만나보세요.`);
+      localStorage.removeItem(getStorageKey());
+      location.reload();
+      return;
+    }
+  } else {
+    gs.starvingStartTime = null;
+  }
+
+  if (getAgeDays() > 31) {
     showEv('🏆', '한 달 키우기 완료!', `${gs.name}가 훌륭한 성견으로 자라 한 달을 꽉 채웠어요!\n새로운 윤회로 아기 강아지부터 다시 시작합니다.\n(보상: 먹이 +30개, 경험치 +100!)`);
-    gs.ageDay = 1;
+    gs.birthTime = now;
     gs.food += 30; addExp(100);
     gs.growthLog.push({lv: gs.level, date: new Date().toLocaleDateString('ko-KR'), note: `한 달 키우기 성공! 🏆`});
-  } else {
-    const stage = getGrowthStage();
-    toast(`🌅 다음 날이 되었습니다! (${gs.ageDay}일차 / ${stage.label})`);
-    if (Math.random() < 0.7) spawnPoop();
   }
-  gs.hunger = Math.max(10, gs.hunger - 15);
-  gs.energy = Math.max(10, gs.energy - 10);
-  gs.clean  = Math.max(10, gs.clean - 10);
-  updateHUD(); save();
 }
 
 function spawnPoop() {
@@ -1595,10 +1741,10 @@ function chooseDog(type) {
 //  게임 시작 / 루프
 // ════════════════════════════════════════════
 function startGame() {
+  sessionStartTime = Date.now();
   updateHUD();
   renderActionLog();
   const cv = document.getElementById('scene-canvas');
-  // 캔버스 너비를 컨테이너에 맞게
   const cw = cv.parentElement.clientWidth || 360;
   cv.width = cw; cv.height = 220;
 
@@ -1701,6 +1847,7 @@ function say(msg, dur=2600) {
   currentSpeech = msg;
   clearTimeout(speechTimer);
   speechTimer = setTimeout(()=>{ currentSpeech=''; }, dur);
+  sfx.bark();
 }
 
 function feedDog() {
@@ -1712,6 +1859,7 @@ function feedDog() {
   setState('eat', 2000);
   say('냠냠! 맛있어요 😋');
   addLog('feed', '🍖 밥 먹기');
+  sfx.eat();
   updateHUD(); renderMissions(); save();
 }
 function bathDog() {
@@ -1723,6 +1871,7 @@ function bathDog() {
   say('깨끗해졌어요! 🛁');
   addLog('bath', '🛁 목욕');
   toast('🛁 목욕 완료! 청결 +40');
+  sfx.pop();
   clearTimeout(bgRestoreTimer);
   bgRestoreTimer = setTimeout(()=>{ gs.equippedBg = prevBg; }, 3500);
   updateHUD(); renderMissions(); save();
@@ -1738,6 +1887,7 @@ function walkDog() {
   say('산책 최고예요! 🌳');
   addLog('walk', '🌳 산책');
   toast('🌳 산책 완료! 행복 +30');
+  sfx.pop();
   clearTimeout(bgRestoreTimer);
   bgRestoreTimer = setTimeout(()=>{ gs.equippedBg = prevBg; }, 4000);
   updateHUD(); renderMissions(); save();
@@ -1751,6 +1901,7 @@ function playDog() {
   say('같이 놀아요! 🎾');
   addLog('play', '🎾 놀기');
   toast('🎾 놀기 완료! 행복 +20');
+  sfx.pop();
   updateHUD(); renderMissions(); save();
 }
 function sleepDog() {
@@ -1762,6 +1913,7 @@ function sleepDog() {
   say('Zzzz... 💤');
   addLog('sleep', '💤 수면');
   toast('💤 숙면 완료! 에너지 +40');
+  sfx.pop();
   clearTimeout(bgRestoreTimer);
   bgRestoreTimer = setTimeout(()=>{ gs.equippedBg = prevBg; }, 4000);
   updateHUD(); renderMissions(); save();
@@ -1792,6 +1944,7 @@ document.getElementById('scene-canvas').addEventListener('click', (e)=>{
     toast('✨ 배변을 깨끗하게 치웠어요! (청결도 +8)');
     say('치워주셔서 고마워요! 멍멍! 🐾');
     addLog('bath', '✨ 배변 청소');
+    sfx.pop();
     updateHUD(); save();
     return;
   }
@@ -1800,6 +1953,7 @@ document.getElementById('scene-canvas').addEventListener('click', (e)=>{
   say(phrases[Math.floor(Math.random()*phrases.length)]);
   setState('play', 800);
   addLog('play','💕 쓰다듬기');
+  sfx.squeak();
   renderActionLog();
 });
 
@@ -1812,7 +1966,7 @@ function updateHUD() {
   const ageBadge = document.getElementById('age-badge');
   if (ageBadge) {
     const st = getGrowthStage();
-    ageBadge.textContent = `${st.label} (${gs.ageDay}일차)`;
+    ageBadge.textContent = `${st.label} (${getAgeDays()}일차)`;
   }
   document.getElementById('food-n').textContent = gs.food;
   ['hunger','happy','clean','energy'].forEach(k=>{
@@ -1829,6 +1983,7 @@ function addExp(n) {
   if (gs.exp >= need) {
     gs.exp -= need; gs.level++;
     spawnConfetti();
+    sfx.fanfare();
     setTimeout(()=>{
       showEv('🎉',`레벨 업! Lv.${gs.level}`,`${gs.name}가 ${gs.level}레벨이 됐어요!\n새 아이템이 해금됐을 수 있어요 ✨`);
       gs.growthLog.push({lv:gs.level, date:new Date().toLocaleDateString('ko-KR'), note:`레벨 ${gs.level} 달성! 🎉`});
@@ -1864,7 +2019,7 @@ function claimMission(id) {
   if(!m||!dm||dm.claimed) return;
   if(dm.count<m.target){toast('아직 완료 못 했어요!');return;}
   dm.claimed=true; gs.food+=m.reward; addExp(15);
-  spawnConfetti(); toast(`🎉 미션 완료! 먹이 +${m.reward}개!`);
+  spawnConfetti(); sfx.fanfare(); toast(`🎉 미션 완료! 먹이 +${m.reward}개!`);
   updateHUD(); renderMissions(); save();
 }
 function claimSpecial(id) {
@@ -1873,7 +2028,7 @@ function claimSpecial(id) {
   if(!m||!sm||sm.claimed) return;
   if(!m.check()){toast('아직 조건을 못 달성했어요!');return;}
   sm.claimed=true; gs.food+=m.reward; addExp(20);
-  spawnConfetti(); toast(`🌟 특별 미션 완료! 먹이 +${m.reward}개!`);
+  spawnConfetti(); sfx.fanfare(); toast(`🌟 특별 미션 완료! 먹이 +${m.reward}개!`);
   updateHUD(); renderMissions(); save();
 }
 function renderMissions() {
@@ -2071,19 +2226,13 @@ function toast(msg){
 }
 
 // ════════════════════════════════════════════
-//  타이머 (스탯 자동 감소 및 배변 생성)
+//  리얼타임 엔진 타이머 (1초 주기)
 // ════════════════════════════════════════════
 setInterval(()=>{
   if(!gs.dog) return;
-  gs.hunger=Math.max(0,gs.hunger-2);
-  gs.happy=Math.max(0,gs.happy-1);
-  gs.clean=Math.max(0,gs.clean-1);
-  gs.energy=Math.max(0,gs.energy-1);
-  if(gs.hunger<20) say('배고파요... 🍖');
-  else if(gs.happy<20) say('심심해요 😢');
-  else if(gs.clean<20) say('목욕하고 싶어요 🛁');
+  checkRealtimeStats();
   updateHUD(); save();
-}, 30000);
+}, 1000);
 
 setInterval(()=>{
   if(!gs.dog) return;

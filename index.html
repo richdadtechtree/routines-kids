@@ -1587,37 +1587,51 @@ function drawLdrUI(){
   rungs.forEach(r=>{h+=`<line x1="${xPos[r.from]}" y1="${r.y}" x2="${xPos[r.to]}" y2="${r.y}" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>`;});
   svg.innerHTML=h;
 }
-function playLadderBGM() {
-  try {
+let ladderAudioCtx = null;
+function getLadderAudioCtx() {
+  if (!ladderAudioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    if (AudioContext) ladderAudioCtx = new AudioContext();
+  }
+  if (ladderAudioCtx && ladderAudioCtx.state === 'suspended') {
+    ladderAudioCtx.resume();
+  }
+  return ladderAudioCtx;
+}
+['touchstart', 'pointerdown', 'click'].forEach(evt => {
+  document.addEventListener(evt, () => { getLadderAudioCtx(); }, { once: true, passive: true });
+});
+function playLadderBGM() {
+  const ctx = getLadderAudioCtx();
+  if (!ctx) return;
+  ctx.resume().then(() => {
     const now = ctx.currentTime;
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 20; i++) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      const startTime = now + i * (0.22 - i * 0.008);
-      const freq = 60 + i * 15;
-      osc.type = 'triangle';
+      const startTime = now + i * (0.18 - i * 0.006);
+      const duration = 0.15;
+      const baseFreq = i % 2 === 0 ? 82 : 87;
+      const freq = baseFreq + i * 8;
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, startTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, startTime + 0.1);
-      gain.gain.setValueAtTime(0.35, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
-      osc.start(startTime); osc.stop(startTime + 0.1);
+      gain.gain.setValueAtTime(0.4, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.start(startTime); osc.stop(startTime + duration);
     }
-    const fanfareTime = now + 2.2;
+    const fanfareTime = now + 2.4;
     [523.25, 659.25, 783.99, 1046.50].forEach((f, idx) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(f, fanfareTime + idx * 0.08);
-      gain.gain.setValueAtTime(0.25, fanfareTime + idx * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.01, fanfareTime + idx * 0.08 + 0.4);
-      osc.start(fanfareTime + idx * 0.08); osc.stop(fanfareTime + idx * 0.08 + 0.4);
+      gain.gain.setValueAtTime(0.3, fanfareTime + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, fanfareTime + idx * 0.08 + 0.5);
+      osc.start(fanfareTime + idx * 0.08); osc.stop(fanfareTime + idx * 0.08 + 0.5);
     });
-  } catch(e) {}
+  }).catch(e => console.log(e));
 }
 function startLadder(){
   if(LDR.running)return;LDR.running=true;

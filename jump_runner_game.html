@@ -2,14 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>점프 달리기</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
+  html, body {
     background: #0d0d1a;
     display: flex;
     flex-direction: column;
@@ -19,6 +19,8 @@
     font-family: 'Noto Sans KR', sans-serif;
     overflow: hidden;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
   }
 
   /* ── 별 배경 ── */
@@ -286,6 +288,10 @@ canvas.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
 document.getElementById('startBtn').addEventListener('keydown', e => {
   if (e.code === 'Space') e.preventDefault();
 });
+
+// 모바일 제스처, 핀치 줌, 바운스 스크롤 원천 차단
+document.addEventListener('touchmove', e => { e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => { e.preventDefault(); });
 
 // ════════════════════════════════════════
 //  게임 시작

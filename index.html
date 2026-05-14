@@ -1072,6 +1072,27 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
 </div>
 
+<!-- 미니게임 선택 모달 -->
+<div class="overlay" id="gameSelectModal" style="display:none; z-index: 2500;">
+  <div class="modal" style="max-width: 420px; text-align: center; padding: 28px 24px;">
+    <button class="modal-x" onclick="closeModal('gameSelectModal')">✕</button>
+    <div style="font-size: 54px; margin-bottom: 12px; animation: bounce 1s infinite;">🎁</div>
+    <div class="modal-title" style="font-size: 22px; color: var(--pri);">축하해요! 미니게임 선택</div>
+    <div class="modal-sub" style="margin-top: 6px; font-size: 13px;">
+      오늘의 루틴 목표 달성! 플레이하고 싶은 미니게임을 선택해주세요 🌟
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 22px;">
+      <button class="btn-pri" style="height: 54px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #6C63FF;" onclick="selectMiniGame('sichuan')">
+        <span style="font-size: 24px;">🐼</span> 지혜 쏙쏙 사천성 퍼즐
+      </button>
+      <button class="btn-pri" style="height: 54px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #E53935;" onclick="selectMiniGame('jump')">
+        <span style="font-size: 24px;">🚀</span> 아이언맨 점프 달리기
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- 독서 로그 -->
 <div class="overlay" id="readingLogModal" style="display:none;">
   <div class="modal" style="max-width:480px;">
@@ -1851,8 +1872,26 @@ function checkMiniGameTrigger(child,dateKey){
     saveState();
     
     setTimeout(()=>{
-      openGameModal(child,dateKey);
+      openGameSelectModal(child,dateKey);
     },550);
+  }
+}
+
+let pendingGameChild = null;
+let pendingGameDateKey = '';
+
+function openGameSelectModal(child, dateKey) {
+  pendingGameChild = child;
+  pendingGameDateKey = dateKey;
+  document.getElementById('gameSelectModal').style.display = 'flex';
+}
+
+function selectMiniGame(type) {
+  closeModal('gameSelectModal');
+  if (type === 'sichuan') {
+    openGameModal(pendingGameChild, pendingGameDateKey);
+  } else if (type === 'jump') {
+    window.open('jump_runner_game.html', '_blank');
   }
 }
 
@@ -2050,6 +2089,7 @@ function renderSichuanBoard() {
 
 // ════════ 사천성 미니게임 사운드 효과음 (Web Audio API) ════════
 let sichuanAudioCtx = null;
+let audioUnlocked = false;
 
 function getSichuanAudioContext() {
   if (!sichuanAudioCtx) {
@@ -2063,6 +2103,26 @@ function getSichuanAudioContext() {
   }
   return sichuanAudioCtx;
 }
+
+// 모바일 웹 오디오 잠금 해제 (User Interaction Unlock)
+function unlockAudioContext() {
+  if (audioUnlocked) return;
+  const ctx = getSichuanAudioContext();
+  if (ctx) {
+    ctx.resume().then(() => {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }).catch(e => console.error(e));
+  }
+}
+
+['touchstart', 'touchend', 'pointerdown', 'click'].forEach(evt => {
+  document.addEventListener(evt, unlockAudioContext, { once: true, passive: true });
+});
 
 function playSichuanSelectSound() {
   try {

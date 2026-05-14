@@ -231,7 +231,7 @@ body{
 <div id="game-screen" class="screen">
   <div id="ghdr">
     <div class="name-tag">
-      <span id="hdr-name">몽이</span>
+      <span id="hdr-name" onclick="onNameClick()" style="cursor:pointer;" title="5번 연속 클릭 시 초기화">몽이</span>
       <span class="lv-badge" id="lv-badge">Lv.1</span>
       <span class="age-badge" id="age-badge">아기 🍼 (1일차)</span>
     </div>
@@ -1512,6 +1512,23 @@ let rafId = null;
 let prevBg = 'day';
 let bgRestoreTimer = null;
 let sessionStartTime = 0;
+
+let nameClickCount = 0;
+let nameClickTimer = null;
+
+function onNameClick() {
+  nameClickCount++;
+  clearTimeout(nameClickTimer);
+  nameClickTimer = setTimeout(() => { nameClickCount = 0; }, 600);
+
+  if (nameClickCount >= 5) {
+    nameClickCount = 0;
+    if (confirm(`정말 ${gs.name}의 모든 성장 데이터를 초기화하고 처음부터 다시 키우시겠습니까? ⚠️`)) {
+      localStorage.removeItem(getStorageKey());
+      location.reload();
+    }
+  }
+}
 
 // ════════════════════════════════════════════
 //  사운드 엔진 (Web Audio API)

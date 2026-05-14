@@ -814,6 +814,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <button class="hbtn" onclick="goToday()" title="오늘">🗓</button>
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
     <button class="hbtn" onclick="openLadderWithPassword()" title="사다리 타기">🎰</button>
+    <button class="hbtn" onclick="openGameWithPassword()" title="사천성 게임">🐼</button>
     <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
     <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
     <button class="hbtn" onclick="openBackupModal()" title="데이터 관리">💾</button>
@@ -1374,6 +1375,14 @@ function openLadderWithPassword() {
     alert('비밀번호가 올바르지 않습니다. ❌');
   }
 }
+function openGameWithPassword() {
+  const pwd = prompt('사천성 게임을 시작하려면 비밀번호를 입력해주세요 🔒');
+  if (pwd === '0418') {
+    openGameModal(curChild(), toKey(today()));
+  } else if (pwd !== null) {
+    alert('비밀번호가 올바르지 않습니다. ❌');
+  }
+}
 let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0};
 function openLadder(streak,routineName){
   LDR.streak=streak||0;LDR.userSlot=-1;LDR.running=false;LDR.numCols=5;LDR.userChild=curChild();
@@ -1478,7 +1487,6 @@ function switchRankingsTab(tab) {
 
 function getSichuanRankings(targetMonth) {
   const results = state.children.map(c => {
-    let accumulatedScore = 0;
     let highScore = 0;
     let gamesCount = 0;
     
@@ -1500,13 +1508,12 @@ function getSichuanRankings(targetMonth) {
           } else if (val === true) {
             score = 1000; // legacy default
           }
-          accumulatedScore += score;
           highScore = Math.max(highScore, score);
           gamesCount++;
         }
       });
     }
-    return { child: c, accumulatedScore, highScore, gamesCount };
+    return { child: c, highScore, gamesCount };
   });
   
   // Rank by highest single game score (개별 최고 점수)
@@ -1549,9 +1556,9 @@ function renderSichuanRankings() {
     const isMe = index === curChildIdx;
     let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
     
-    // 개별 최고 점수를 전면 스코어로 표시하고, 누적 점수 및 플레이 횟수를 서브로 표시
+    // 개별 최고 점수를 표시하고 플레이 횟수를 서브로 표시
     const scoreText = `${item.highScore.toLocaleString()}점`;
-    const subtext = `누적 ${item.accumulatedScore.toLocaleString()}점 | 🎮 ${item.gamesCount}회`;
+    const subtext = `🎮 플레이 ${item.gamesCount}회`;
     
     html += `
       <div class="rank-item${isMe ? ' is-me' : ''}">
@@ -1797,11 +1804,6 @@ function checkMiniGameTrigger(child,dateKey){
     setTimeout(()=>{
       openGameModal(child,dateKey);
     },550);
-  } else {
-    if(child.gamesPlayed[dateKey]){
-      delete child.gamesPlayed[dateKey];
-      saveState();
-    }
   }
 }
 

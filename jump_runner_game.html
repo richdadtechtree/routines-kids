@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>점프 달리기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0d1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Noto Sans KR', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── 별 배경 ── */
+  #starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+
+  /* ── 래퍼 ── */
+  #wrapper {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+
+  /* ── HUD (점수 / 하이스코어) ── */
+  #hud {
+    display: flex; gap: 32px; align-items: center;
+  }
+  .hud-box {
+    text-align: center;
+  }
+  .hud-label {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: #6b7aaa; font-family: 'Jua', sans-serif;
+  }
+  .hud-value {
+    font-size: 28px; font-family: 'Jua', sans-serif;
+    color: #ffffff; line-height: 1.1;
+  }
+  #hud-score { color: #ffe066; }
+  #hud-best  { color: #88e0c8; }
+
+  /* ── 게임 캔버스 ── */
+  #gameCanvas {
+    display: block;
+    border-radius: 16px;
+    border: 2px solid #1e2240;
+    cursor: pointer;
+    image-rendering: pixelated;
+  }
+
+  /* ── 버튼 ── */
+  #startBtn {
+    font-family: 'Jua', sans-serif;
+    font-size: 18px;
+    color: #0d0d1a;
+    background: #ffe066;
+    border: none;
+    border-radius: 40px;
+    padding: 12px 40px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform .1s, background .1s;
+  }
+  #startBtn:hover  { background: #ffd030; transform: scale(1.04); }
+  #startBtn:active { transform: scale(0.97); }
+  #startBtn.hidden { display: none; }
+
+  /* ── 조작 힌트 ── */
+  #hint {
+    font-size: 12px; color: #444e7a;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div id="wrapper">
+  <div id="hud">
+    <div class="hud-box">
+      <div class="hud-label">점수</div>
+      <div class="hud-value" id="hud-score">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">최고기록</div>
+      <div class="hud-value" id="hud-best">0</div>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="700" height="260"></canvas>
+
+  <button id="startBtn" onclick="startGame()">시작하기 🚀</button>
+  <div id="hint">스페이스바 · 클릭 · 화면 터치로 점프!</div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  별 배경 (한 번만 그리기)
+// ════════════════════════════════════════
+(function initStars() {
+  const sc = document.getElementById('starfield');
+  sc.width  = window.innerWidth;
+  sc.height = window.innerHeight;
+  const ctx = sc.getContext('2d');
+  for (let i = 0; i < 180; i++) {
+    const x = Math.random() * sc.width;
+    const y = Math.random() * sc.height;
+    const r = Math.random() * 1.4;
+    const a = Math.random() * 0.7 + 0.1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,210,255,${a})`;
+    ctx.fill();
+  }
+})();
+
+// ════════════════════════════════════════
+//  게임 설정 상수
+// ════════════════════════════════════════
+const W = 700, H = 260;
+const GROUND_Y   = 200;    // 땅 y 좌표
+const GRAVITY    = 0.52;   // 중력 (살짝 낮춰서 체공 시간 여유)
+const JUMP_V     = -13;    // 점프 속도
+const INIT_SPEED = 3.0;    // ★ 초기 속도 낮춤 (기존 5 → 3)
+const MAX_SPEED  = 18;     // ★ 최고 속도는 더 높여서 후반 스릴
+const SPEED_INC  = 0.0015; // ★ 천천히 올라가되 꾸준히 (기존 0.002)
+
+// 속도 구간별 레이블 (아이들이 체감할 수 있게)
+const SPEED_STAGES = [
+  { threshold: 0,    label: '워밍업 🐢',  color: '#88e0c8' },
+  { threshold: 5,    label: '달리기 🏃',  color: '#ffe066' },
+  { threshold: 8,    label: '전력질주 💨', color: '#ff9966' },
+  { threshold: 11,   label: '초고속 🔥',  color: '#ff6666' },
+  { threshold: 14,   label: '광속 ⚡',    color: '#cc44ff' },
+];
+
+// ════════════════════════════════════════
+//  캔버스 / 컨텍스트
+// ════════════════════════════════════════
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+
+// ════════════════════════════════════════
+//  게임 상태 변수
+// ════════════════════════════════════════
+let state      = 'idle';   // idle | running | dead
+let score      = 0;
+let bestScore  = parseInt(localStorage.getItem('jumpRunBest') || '0');
+let speed      = INIT_SPEED;
+let frameId    = null;
+let frameCount = 0;
+let nextObstDist = 90;   // 다음 장애물까지 남은 거리
+
+// ── 플레이어 ──
+const player = {
+  x: 90, y: GROUND_Y,
+  w: 38, h: 48,
+  vy: 0,          // 수직 속도
+  onGround: true,
+  legAnim: 0,     // 다리 애니메이션 프레임
+  dead: false
+};
+
+// ── 장애물 배열 ──
+let obstacles = [];
+
+// ── 파티클 배열 (착지 먼지, 충돌 폭발) ──
+let particles = [];
+
+// ── 배경 레이어 (달, 구름) ──
+const bgLayers = [
+  // 먼 산 (느리게)
+  { x: 0, speed: 0.3 },
+];
+
+// ════════════════════════════════════════
+//  HUD 업데이트
+// ════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('hud-score').textContent = Math.floor(score);
+  document.getElementById('hud-best').textContent  = Math.floor(bestScore);
+}
+
+// ════════════════════════════════════════
+//  점프 함수
+// ════════════════════════════════════════
+function jump() {
+  if (state === 'idle' || state === 'dead') { startGame(); return; }
+  if (state === 'running' && player.onGround) {
+    player.vy = JUMP_V;
+    player.onGround = false;
+    spawnDustParticles(player.x + player.w / 2, GROUND_Y + player.h, '#c8b8ff', 6);
+  }
+}
+
+// ════════════════════════════════════════
+//  키 / 터치 입력
+// ════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+});
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
+document.getElementById('startBtn').addEventListener('keydown', e => {
+  if (e.code === 'Space') e.preventDefault();
+});
+
+// ════════════════════════════════════════
+//  게임 시작
+// ════════════════════════════════════════
+function startGame() {
+  if (frameId) cancelAnimationFrame(frameId);
+
+  // 초기화
+  state       = 'running';
+  score       = 0;
+  speed       = INIT_SPEED;
+  frameCount  = 0;
+  nextObstDist = 160;  // ★ 첫 장애물 여유있게
+  obstacles   = [];
+  particles   = [];
+  bgLayers[0].x = 0;
+
+  player.y        = GROUND_Y;
+  player.vy       = 0;
+  player.onGround = true;
+  player.dead     = false;
+  player.legAnim  = 0;
+
+  document.getElementById('startBtn').classList.add('hidden');
+  updateHUD();
+  frameId = requestAnimationFrame(loop);
+}
+
+// ════════════════════════════════════════
+//  장애물 생성 (선인장만 — 단순하게)
+// ════════════════════════════════════════
+function spawnObstacle() {
+  // 초반엔 낮은 선인장만 → 속도 오를수록 높은 것도 등장
+  const highChance = Math.min(0.45, (speed - INIT_SPEED) / 20);
+  const type = Math.random() < highChance ? 1 : 0;
+
+  if (type === 0) {
+    obstacles.push({ x: W + 10, y: GROUND_Y + 12, w: 22, h: 36, type: 0 });
+  } else {
+    obstacles.push({ x: W + 10, y: GROUND_Y + 2,  w: 28, h: 46, type: 1 });
+  }
+}
+
+// ════════════════════════════════════════
+//  파티클 생성
+// ════════════════════════════════════════
+function spawnDustParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 3,
+      vy: -Math.random() * 2 - 0.5,
+      life: 1, decay: 0.06 + Math.random() * 0.04,
+      r: 2 + Math.random() * 3,
+      color
+    });
+  }
+}
+
+function spawnExplosion(x, y) {
+  const colors = ['#ffe066','#ff6666','#ff9966','#ffffff'];
+  for (let i = 0; i < 18; i++) {
+    const ang = (Math.PI * 2 / 18) * i;
+    const spd = 2 + Math.random() * 4;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      life: 1, decay: 0.04 + Math.random() * 0.04,
+      r: 3 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+}
+
+// ════════════════════════════════════════
+//  충돌 감지 (AABB — 여유 크게)
+// ════════════════════════════════════════
+function collides(o) {
+  const margin = 10; // ★ 여유 크게 (기존 6 → 10, 아이들 억울함 방지)
+  return (
+    player.x + margin         < o.x + o.w - margin &&
+    player.x + player.w - margin > o.x + margin    &&
+    player.y + margin         < o.y + o.h - margin  &&
+    player.y + player.h - margin > o.y + margin
+  );
+}
+
+// ════════════════════════════════════════
+//  게임 오버
+// ════════════════════════════════════════
+function gameover() {
+  state       = 'dead';
+  player.dead = true;
+  spawnExplosion(player.x + player.w / 2, player.y + player.h / 2);
+
+  if (score > bestScore) {
+    bestScore = Math.floor(score);
+    localStorage.setItem('jumpRunBest', bestScore);
+  }
+  updateHUD();
+
+  setTimeout(() => {
+    document.getElementById('startBtn').textContent = '다시하기 🔄';
+    document.getElementById('startBtn').classList.remove('hidden');
+  }, 800);
+}
+
+// ════════════════════════════════════════
+//  메인 루프
+// ════════════════════════════════════════
+function loop() {
+  frameId = requestAnimationFrame(loop);
+  frameCount++;
+  update();
+  draw();
+}
+
+// ════════════════════════════════════════
+//  UPDATE
+// ════════════════════════════════════════
+function update() {
+  if (state !== 'running') return;
+
+  // 속도 증가
+  speed = Math.min(MAX_SPEED, INIT_SPEED + frameCount * SPEED_INC);
+
+  // 점수 (속도에 비례해서 오름)
+  score += speed * 0.045;
+  updateHUD();
+
+  // ── 플레이어 물리 ──
+  player.vy       += GRAVITY;
+  player.y        += player.vy;
+  player.legAnim  += 1;
+
+  if (player.y >= GROUND_Y) {
+    if (!player.onGround) {
+      spawnDustParticles(player.x + player.w / 2, GROUND_Y + player.h, '#8888aa', 5);
+    }
+    player.y        = GROUND_Y;
+    player.vy       = 0;
+    player.onGround = true;
+  }
+
+  // ── 장애물 생성 ──
+  nextObstDist -= speed;
+  if (nextObstDist <= 0) {
+    spawnObstacle();
+    // ★ 초반엔 간격 넓게(180), 속도 오를수록 좁아짐(최소 70)
+    const minGap = Math.max(70, 180 - speed * 8);
+    nextObstDist = minGap + Math.random() * 60;
+  }
+
+  // ── 장애물 이동 & 충돌 ──
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+    o.x -= speed;
+    if (o.x + o.w < 0) { obstacles.splice(i, 1); continue; }
+    if (collides(o)) { gameover(); return; }
+  }
+
+  // ── 배경 레이어 ──
+  bgLayers[0].x -= 0.3;
+
+  // ── 파티클 ──
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x    += p.vx;
+    p.y    += p.vy;
+    p.vy   += 0.1;
+    p.life -= p.decay;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// ════════════════════════════════════════
+//  DRAW
+// ════════════════════════════════════════
+function draw() {
+  // ── 배경 ──
+  ctx.fillStyle = '#0d0d2a';
+  ctx.fillRect(0, 0, W, H);
+
+  // 달
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(620, 38, 22, 0, Math.PI * 2);
+  ctx.fillStyle = '#fffbe0';
+  ctx.fill();
+  // 달 표면 크레이터
+  ctx.globalAlpha = 0.25;
+  ctx.beginPath(); ctx.arc(612, 32, 5, 0, Math.PI*2); ctx.fillStyle='#e0d8a0'; ctx.fill();
+  ctx.beginPath(); ctx.arc(625, 44, 3, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // 별(빠른 레이어)
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  // 간단히 몇 개만 미리 그려둔 좌표로
+  const starPts = [[50,20],[120,40],[200,15],[300,30],[400,18],[500,35],[80,55],[160,50]];
+  starPts.forEach(([sx, sy]) => {
+    ctx.beginPath(); ctx.arc(sx, sy, 1, 0, Math.PI*2);
+    ctx.fillStyle = '#c8d0ff'; ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // ── 구름 (스크롤) ──
+  const cx = ((bgLayers[0].x % W) + W) % W;
+  drawCloud(ctx, cx,       55, 60, 22);
+  drawCloud(ctx, cx + 260, 40, 80, 18);
+  drawCloud(ctx, cx + 500, 65, 50, 16);
+  // 래핑(화면 반복)
+  drawCloud(ctx, cx - W + 0,   55, 60, 22);
+  drawCloud(ctx, cx - W + 260, 40, 80, 18);
+  drawCloud(ctx, cx - W + 500, 65, 50, 16);
+
+  // ── 땅 ──
+  // 메인 라인
+  ctx.strokeStyle = '#3344aa';
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y + player.h);
+  ctx.lineTo(W, GROUND_Y + player.h);
+  ctx.stroke();
+
+  // 땅 채우기 (그라데이션)
+  const grd = ctx.createLinearGradient(0, GROUND_Y + player.h, 0, H);
+  grd.addColorStop(0, '#1a1a4a');
+  grd.addColorStop(1, '#0d0d1a');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, GROUND_Y + player.h, W, H - (GROUND_Y + player.h));
+
+  // 땅 패턴 (점선)
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = '#4455cc';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([6, 12]);
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y + player.h + 6);
+  ctx.lineTo(W, GROUND_Y + player.h + 6);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // ── 파티클 ──
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // ── 장애물 ──
+  obstacles.forEach(o => drawCactus(ctx, o));
+
+  // ── 플레이어 ──
+  if (!player.dead) {
+    drawPlayer(ctx, player);
+  }
+
+  // ── 속도 단계 표시 (좌측 상단) ──
+  const stage = [...SPEED_STAGES].reverse().find(s => speed >= s.threshold) || SPEED_STAGES[0];
+  ctx.save();
+  ctx.font = 'bold 13px "Jua", sans-serif';
+  ctx.fillStyle = stage.color;
+  ctx.textAlign = 'left';
+  ctx.fillText(stage.label, 14, 22);
+  // 속도 바 (전체)
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.roundRect(14, 28, 120, 5, 3); ctx.fill();
+  ctx.globalAlpha = 1;
+  const pct = Math.min(1, (speed - INIT_SPEED) / (MAX_SPEED - INIT_SPEED));
+  ctx.fillStyle = stage.color;
+  ctx.beginPath(); ctx.roundRect(14, 28, 120 * pct, 5, 3); ctx.fill();
+  ctx.restore();
+
+  // ── DEAD 오버레이 ──
+  if (state === 'dead') {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#0d0d1a';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#ff6666';
+    ctx.font = 'bold 32px "Jua", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('게임 오버!', W / 2, H / 2 - 8);
+
+    ctx.fillStyle = '#ffe066';
+    ctx.font = '18px "Jua", sans-serif';
+    ctx.fillText(`점수: ${Math.floor(score)}`, W / 2, H / 2 + 22);
+    if (score >= bestScore && score > 0) {
+      ctx.fillStyle = '#88e0c8';
+      ctx.font = '13px "Jua", sans-serif';
+      ctx.fillText('🏆 신기록!', W / 2, H / 2 + 44);
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
+  // ── IDLE 오버레이 ──
+  if (state === 'idle') {
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#0d0d1a';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#ffe066';
+    ctx.font = 'bold 30px "Jua", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('점프 달리기 🚀', W / 2, H / 2 - 10);
+    ctx.fillStyle = '#8899cc';
+    ctx.font = '14px "Noto Sans KR"';
+    ctx.fillText('장애물을 피해 달려보세요!', W / 2, H / 2 + 18);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+}
+
+// ════════════════════════════════════════
+//  그리기 헬퍼 함수들
+// ════════════════════════════════════════
+
+// 구름
+function drawCloud(ctx, x, y, w, h) {
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#aabbff';
+  ctx.beginPath();
+  ctx.ellipse(x,       y,       w * 0.4, h * 0.6, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + w * 0.3, y - h * 0.1, w * 0.35, h * 0.7, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + w * 0.6, y,       w * 0.38, h * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// 플레이어 (SVG 대신 Canvas로 직접 그린 캐릭터)
+function drawPlayer(ctx, p) {
+  const x = p.x, y = p.y, w = p.w, h = p.h;
+  const cx = x + w / 2;
+  const jump = !p.onGround;
+
+  // 그림자
+  ctx.save();
+  ctx.globalAlpha = p.onGround ? 0.3 : 0.1;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(cx, GROUND_Y + h + 3, w * 0.5, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 다리 (달리기 애니메이션)
+  const legSwing = jump ? 0 : Math.sin(p.legAnim * 0.28) * 10;
+  const legW = 7, legH = 14;
+
+  // 왼다리
+  ctx.save();
+  ctx.fillStyle = '#4466ff';
+  ctx.beginPath();
+  ctx.roundRect(cx - legW - 4, y + h - legH + legSwing, legW, legH, 3);
+  ctx.fill();
+  // 왼발
+  ctx.fillStyle = '#ffe066';
+  ctx.beginPath();
+  ctx.roundRect(cx - legW - 6, y + h - 4 + legSwing, legW + 4, 6, 3);
+  ctx.fill();
+  ctx.restore();
+
+  // 오른다리
+  ctx.save();
+  ctx.fillStyle = '#4466ff';
+  ctx.beginPath();
+  ctx.roundRect(cx + 4, y + h - legH - legSwing, legW, legH, 3);
+  ctx.fill();
+  // 오른발
+  ctx.fillStyle = '#ffe066';
+  ctx.beginPath();
+  ctx.roundRect(cx + 2, y + h - 4 - legSwing, legW + 4, 6, 3);
+  ctx.fill();
+  ctx.restore();
+
+  // 몸통
+  ctx.fillStyle = '#334dff';
+  ctx.beginPath();
+  ctx.roundRect(x + 4, y + h * 0.35, w - 8, h * 0.5, 6);
+  ctx.fill();
+
+  // 팔 (달리기 시 흔들림)
+  const armSwing = jump ? -8 : Math.cos(p.legAnim * 0.28) * 7;
+  ctx.fillStyle = '#334dff';
+  // 왼팔
+  ctx.beginPath();
+  ctx.roundRect(x - 2, y + h * 0.38 + armSwing, 8, 5, 3);
+  ctx.fill();
+  // 오른팔
+  ctx.beginPath();
+  ctx.roundRect(x + w - 6, y + h * 0.38 - armSwing, 8, 5, 3);
+  ctx.fill();
+
+  // 머리
+  ctx.fillStyle = '#ffcc88';
+  ctx.beginPath();
+  ctx.arc(cx, y + h * 0.22, 13, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 눈
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(cx + 4, y + h * 0.18, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  // 눈 하이라이트
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx + 5, y + h * 0.16, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 입 (점프 시 :O, 달리기 시 :D)
+  ctx.strokeStyle = '#884422';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (jump) {
+    ctx.arc(cx + 2, y + h * 0.26, 3, 0, Math.PI * 2);
+  } else {
+    ctx.arc(cx + 2, y + h * 0.25, 3, 0, Math.PI);
+  }
+  ctx.stroke();
+
+  // 머리카락
+  ctx.fillStyle = '#3322aa';
+  ctx.beginPath();
+  ctx.ellipse(cx, y + h * 0.09, 11, 7, -0.1, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // 앞머리 삐죽
+  ctx.beginPath();
+  ctx.moveTo(cx + 8, y + h * 0.11);
+  ctx.lineTo(cx + 14, y + h * 0.06);
+  ctx.lineTo(cx + 10, y + h * 0.16);
+  ctx.fillStyle = '#3322aa';
+  ctx.fill();
+
+  // 헬멧 바이저 (작은 선)
+  ctx.strokeStyle = '#5566ff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, y + h * 0.22, 9, -0.8, 0.4);
+  ctx.stroke();
+}
+
+// 선인장 장애물
+function drawCactus(ctx, o) {
+  const x = o.x, y = o.y, w = o.w, h = o.h;
+  const cx = x + w / 2;
+
+  ctx.fillStyle = '#3aaa60';
+
+  // 몸통
+  ctx.beginPath();
+  ctx.roundRect(cx - w * 0.3, y, w * 0.6, h, 5);
+  ctx.fill();
+
+  // 왼쪽 팔
+  ctx.beginPath();
+  ctx.roundRect(cx - w * 0.7, y + h * 0.25, w * 0.4, h * 0.2, 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(cx - w * 0.7, y + h * 0.1, w * 0.18, h * 0.2, 4);
+  ctx.fill();
+
+  // 오른쪽 팔
+  ctx.beginPath();
+  ctx.roundRect(cx + w * 0.3, y + h * 0.38, w * 0.4, h * 0.2, 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(cx + w * 0.52, y + h * 0.22, w * 0.18, h * 0.22, 4);
+  ctx.fill();
+
+  // 가시들
+  ctx.fillStyle = '#5be08a';
+  const spines = [
+    [cx, y + 4],
+    [cx - w * 0.28, y + h * 0.15],
+    [cx + w * 0.28, y + h * 0.2],
+  ];
+  spines.forEach(([sx, sy]) => {
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - 5);
+    ctx.lineTo(sx - 2, sy + 2);
+    ctx.lineTo(sx + 2, sy + 2);
+    ctx.fill();
+  });
+}
+
+// 새 장애물 (공중)
+function drawBird(ctx, o) {
+  const x = o.x, y = o.y, w = o.w, h = o.h;
+  const cx = x + w / 2, cy = y + h / 2;
+  const flap = Math.sin(o.wing) * 8; // 날개 퍼덕
+
+  ctx.fillStyle = '#ff8855';
+
+  // 몸통
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, w * 0.35, h * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 날개 (위아래로 움직임)
+  ctx.beginPath();
+  ctx.ellipse(cx - w * 0.28, cy - flap, w * 0.3, h * 0.28, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + w * 0.28, cy - flap, w * 0.3, h * 0.28, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 부리
+  ctx.fillStyle = '#ffcc44';
+  ctx.beginPath();
+  ctx.moveTo(cx + w * 0.35, cy);
+  ctx.lineTo(cx + w * 0.52, cy - 2);
+  ctx.lineTo(cx + w * 0.52, cy + 4);
+  ctx.closePath();
+  ctx.fill();
+
+  // 눈
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(cx + w * 0.2, cy - 2, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx + w * 0.21, cy - 3, 1, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ════════════════════════════════════════
+//  초기 idle 화면 한 번 그리기
+// ════════════════════════════════════════
+updateHUD();
+draw();
+</script>
+</body>
+</html>

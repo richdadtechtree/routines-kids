@@ -416,9 +416,11 @@ function loop() {
 function update() {
   if (state !== 'running') return;
 
-  // 속도 증가 (프레임마다 누적 방식, 아이템으로 감속 가능)
-  if (speed < MAX_SPEED) {
-    speed += SPEED_INC;
+  // 60fps 기준 약 5초(300프레임)마다 계단식으로 속도 확실하게 상향
+  if (frameCount > 0 && frameCount % 300 === 0) {
+    if (speed < MAX_SPEED) {
+      speed = Math.min(MAX_SPEED, speed + 1.2);
+    }
   }
 
   // 점수 (속도에 비례해서 오름)

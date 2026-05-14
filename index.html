@@ -975,6 +975,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
         <div class="lr-emoji" id="lrEmoji"></div>
         <div class="lr-text"  id="lrText"></div>
         <div class="lr-sub"   id="lrSub"></div>
+        <button class="btn-pri" id="downloadCouponBtn" onclick="downloadCoupon()" style="margin-top:16px; font-size:15px; display:none; background:#10B981; border:none;">📸 당첨 쿠폰 이미지 다운로드</button>
       </div>
       <button class="ldr-start" id="ladderStartBtn" onclick="startLadder()">🎲 사다리 출발!</button>
     </div>
@@ -1098,6 +1099,27 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
 </div>
 
+<!-- 수동 사다리 종류 선택 모달 -->
+<div class="overlay" id="ladderSelectModal" style="display:none; z-index: 2500;">
+  <div class="modal" style="max-width: 420px; text-align: center; padding: 28px 24px;">
+    <button class="modal-x" onclick="closeModal('ladderSelectModal')">✕</button>
+    <div style="font-size: 54px; margin-bottom: 12px; animation: bounce 1s infinite;">🎰</div>
+    <div class="modal-title" style="font-size: 22px; color: var(--pri);">사다리 보상 종류 선택</div>
+    <div class="modal-sub" style="margin-top: 6px; font-size: 13px;">
+      진행할 사다리 게임의 보상 라인업을 선택해주세요 🌟
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 22px;">
+      <button class="btn-pri" style="height: 58px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #6C63FF;" onclick="selectManualLadder(false)">
+        <span style="font-size: 24px;">🎁</span> 일반 보상 (5일 연속 라인업)
+      </button>
+      <button class="btn-pri" style="height: 58px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #F59E0B;" onclick="selectManualLadder(true)">
+        <span style="font-size: 24px;">👑</span> 프리미엄 보상 (15회 연속 라인업)
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- 독서 로그 -->
 <div class="overlay" id="readingLogModal" style="display:none;">
   <div class="modal" style="max-width:480px;">
@@ -1169,7 +1191,8 @@ textarea.form-input { resize: none; line-height: 1.7; }
 
 <script>
 // ════════ 상수 ════════
-const REWARDS=[{icon:'🏪',name:'다이소\n2,000원권'},{icon:'🏪',name:'편의점\n2,000원권'},{icon:'🍦',name:'아이스크림\n1개'},{icon:'📚',name:'도서\n구입권'},{icon:'📱',name:'패드\n30분'},{icon:'🎬',name:'영화\n1편'}];
+const REWARDS=[{icon:'🏪',name:'다이소\n1,000원권'},{icon:'🏪',name:'편의점\n1,000원권'},{icon:'🍦',name:'아이스크림\n1개'},{icon:'🪙',name:'용돈\n1,000원'},{icon:'📱',name:'패드\n30분'},{icon:'🍪',name:'과자\n1봉지'}];
+const SPECIAL_REWARDS=[{icon:'📚',name:'도서\n구매권'},{icon:'🍿',name:'퍼니스낵\n자유 구매권(1개)'},{icon:'👩‍👧',name:'엄마와\n데이트권(주말)'},{icon:'👨‍👧',name:'아빠와\n데이트권(주말)'},{icon:'🪙',name:'용돈\n3,000원'},{icon:'🎟️',name:'평일 하루\n자유 이용권'}];
 const ROUTINE_ICONS=['🦷','📖','✏️','🏃','🛁','🍎','💊','🧹','🐶','😴','🎸','🖥️','🧘','💪','🎨','🎯'];
 const CHILD_AVATARS=['👦','👧','🧒','🐱','🐶','🦊','🐼','🐨','🐸','🦁','🐯','🐰'];
 const CHILD_COLORS=['#6C63FF','#FF6B9D','#22C55E','#F59E0B','#3B82F6','#EF4444','#8B5CF6','#14B8A6'];
@@ -1408,10 +1431,13 @@ function toggleCheck(dateKey,routineId){
   checkMiniGameTrigger(child,dateKey);
   render();
 }
+function calcWeekdayStreak(child,rid){let cnt=0,d=new Date(today());while(true){const day=d.getDay();if(day>=1&&day<=5){if(child.checks[`${toKey(d)}_${rid}`]){cnt++;}else{break;}}d.setDate(d.getDate()-1);}return cnt;}
 function checkStreakReward(child,routineId){
-  const s=calcStreak(child,routineId),mk=`${today().getFullYear()}-${String(today().getMonth()+1).padStart(2,'0')}`;
-  if(child.ladderUsed[mk])return;
-  if(s===5||s===10){const rt=allR().find(r=>r.id===routineId);setTimeout(()=>openLadder(s,rt?rt.name:''),400);}
+  const ws=calcWeekdayStreak(child,routineId);
+  const s=calcStreak(child,routineId);
+  const rt=allR().find(r=>r.id===routineId);
+  if(ws>0&&ws%15===0){setTimeout(()=>openLadder(ws,rt?rt.name:'',routineId,true),400);}
+  else if(s>0&&s%5===0){setTimeout(()=>openLadder(s,rt?rt.name:'',routineId,false),400);}
 }
 
 // ════════ 비밀번호 모달 공통 ════════
@@ -1446,8 +1472,12 @@ document.getElementById('pwdInput').addEventListener('keydown', e => {
 // ════════ 사다리 ════════
 function openLadderWithPassword() {
   openPasswordModal('사다리 타기 🎰', '사다리 타기를 시작하려면 비밀번호를 입력해주세요 🔒', () => {
-    openLadder();
+    document.getElementById('ladderSelectModal').style.display = 'flex';
   });
+}
+function selectManualLadder(isSpecial) {
+  closeModal('ladderSelectModal');
+  openLadder(0, isSpecial ? '프리미엄 사다리' : '일반 사다리', null, isSpecial);
 }
 function openGameWithPassword() {
   openPasswordModal('사천성 게임 🐼', '사천성 게임을 시작하려면 비밀번호를 입력해주세요 🔒', () => {
@@ -1466,15 +1496,19 @@ function openDoggyGameWithPassword() {
     window.open(`doggy_game.html?childId=${cid}`, '_blank');
   });
 }
-let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0};
-function openLadder(streak,routineName){
+let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0,routineId:null,isSpecial:false};
+let curCoupon={childName:'',rewardName:'',icon:''};
+function openLadder(streak,routineName,routineId,isSpecial){
   LDR.streak=streak||0;LDR.userSlot=-1;LDR.running=false;LDR.numCols=5;LDR.userChild=curChild();
-  LDR.rewards=[...REWARDS].sort(()=>Math.random()-.5).slice(0,5);
-  document.getElementById('ladderSub').textContent=streak?`🔥 ${streak}일 연속! ${routineName} 보상을 받으세요`:'사다리 타기를 즐겨보세요!';
+  LDR.routineId=routineId||null;LDR.isSpecial=!!isSpecial;
+  const pool=LDR.isSpecial?SPECIAL_REWARDS:REWARDS;
+  LDR.rewards=[...pool].sort(()=>Math.random()-.5).slice(0,5);
+  document.getElementById('ladderSub').textContent=LDR.isSpecial?`🎉 평일 15회 연속 달성 스페셜! ${routineName} 특별 보상`:(streak?`🔥 ${streak}일 연속! ${routineName} 보상을 받으세요`:'사다리 타기를 즐겨보세요!');
   renderSlots();
   document.getElementById('ladderStep1').style.display='block';
   document.getElementById('ladderStep2').style.display='none';
   document.getElementById('ladderResult').classList.remove('show');
+  document.getElementById('downloadCouponBtn').style.display='none';
   document.getElementById('ladderModal').style.display='flex';
 }
 function renderSlots(){
@@ -1514,7 +1548,7 @@ function startLadder(){
   animPath(userSlot,yLevels,()=>{
     revealRewards(pos,rewards[pos]);btn.textContent='🎊 완료!';
     const mk=`${today().getFullYear()}-${String(today().getMonth()+1).padStart(2,'0')}`;
-    setTimeout(()=>{const rw=rewards[pos];document.getElementById('lrEmoji').textContent=rw.icon+' 🎉';document.getElementById('lrText').textContent=`${userChild.name}이(가) "${rw.name.replace('\n',' ')}" 당첨!`;document.getElementById('lrSub').textContent='축하해요! 보호자에게 보여주세요 🥳';document.getElementById('ladderResult').classList.add('show');userChild.ladderUsed[mk]=true;saveState();},400);
+    setTimeout(()=>{const rw=rewards[pos];document.getElementById('lrEmoji').textContent=rw.icon+' 🎉';document.getElementById('lrText').textContent=`${userChild.name}이(가) "${rw.name.replace('\n',' ')}" 당첨!`;document.getElementById('lrSub').textContent='축하해요! 보호자에게 보여주세요 🥳';document.getElementById('ladderResult').classList.add('show');curCoupon={childName:userChild.name,rewardName:rw.name.replace('\n',' '),icon:rw.icon};document.getElementById('downloadCouponBtn').style.display='block';saveState();},400);
   });
 }
 function animPath(startCol,yLevels,onDone){
@@ -1528,6 +1562,32 @@ function animPath(startCol,yLevels,onDone){
 }
 function animMove(el,tx,ty,ms,cb){const fx=parseFloat(el.getAttribute('cx')),fy=parseFloat(el.getAttribute('cy')),s=performance.now();function fr(now){const t=Math.min((now-s)/ms,1),e=t<.5?2*t*t:-1+(4-2*t)*t;el.setAttribute('cx',fx+(tx-fx)*e);el.setAttribute('cy',fy+(ty-fy)*e);if(t<1)requestAnimationFrame(fr);else{el.setAttribute('cx',tx);el.setAttribute('cy',ty);cb&&cb();}}requestAnimationFrame(fr);}
 function revealRewards(winCol,winReward){LDR.rewards.forEach((r,i)=>{const b=document.getElementById(`rb${i}`);if(!b)return;setTimeout(()=>{b.querySelector('.ri').textContent=r.icon;b.querySelector('.rn').textContent=r.name.replace('\n',' ');if(i===winCol)b.classList.add('win');},i*120);});}
+function downloadCoupon(){
+  const canvas=document.createElement('canvas');
+  canvas.width=800;canvas.height=500;
+  const ctx=canvas.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,800,500);
+  grad.addColorStop(0,'#6C63FF');grad.addColorStop(1,'#3B82F6');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,800,500);
+  ctx.fillStyle='#FFFFFF';ctx.shadowColor='rgba(0,0,0,0.2)';ctx.shadowBlur=20;
+  ctx.fillRect(40,40,720,420);ctx.shadowBlur=0;
+  ctx.strokeStyle='#6C63FF';ctx.lineWidth=4;ctx.setLineDash([10,10]);
+  ctx.strokeRect(55,55,690,390);ctx.setLineDash([]);
+  ctx.fillStyle='#1E1B4B';ctx.font='bold 30px sans-serif';ctx.textAlign='center';
+  ctx.fillText('🌟 오늘의 루틴 완성 특별 보상 🌟',400,120);
+  ctx.font='75px sans-serif';ctx.fillText(curCoupon.icon,400,230);
+  const titleText=curCoupon.rewardName.includes('권')?`${curCoupon.childName} ${curCoupon.rewardName}`:`${curCoupon.childName} ${curCoupon.rewardName} 이용권`;
+  const fontSize=titleText.length>16?34:(titleText.length>12?38:44);
+  ctx.fillStyle='#6C63FF';ctx.font=`bold ${fontSize}px sans-serif`;
+  ctx.fillText(titleText,400,320);
+  const todayStr=new Date().toLocaleDateString('ko-KR');
+  ctx.fillStyle='#6B7280';ctx.font='20px sans-serif';ctx.fillText(`발급일: ${todayStr}`,400,380);
+  ctx.fillStyle='#374151';ctx.font='bold 22px sans-serif';
+  ctx.fillText('참 잘했어요! 보호자에게 보여주고 보상을 받으세요 🎁',400,425);
+  const link=document.createElement('a');
+  link.download=`${curCoupon.childName}_${curCoupon.rewardName}.png`;
+  link.href=canvas.toDataURL('image/png');link.click();
+}
 
 // ════════ 루틴왕 ════════
 function checkKingOnLoad(){

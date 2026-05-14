@@ -445,9 +445,9 @@ function update() {
   nextObstDist -= speed;
   if (nextObstDist <= 0) {
     spawnObstacle();
-    // ★ 장애물 간격 훨씬 넓게 조정 (선인장이 촘촘하지 않게)
-    const minGap = Math.max(180, 280 - speed * 4);
-    nextObstDist = minGap + Math.random() * 140;
+    // ★ 선인장 간격을 대폭 넓히고 변동폭을 크게 주어 완전히 불규칙하고 다채로운 리듬으로 등장
+    const minGap = Math.max(220, 320 - speed * 3);
+    nextObstDist = minGap + Math.random() * 280;
   }
 
   // ── 장애물 이동 & 충돌 ──

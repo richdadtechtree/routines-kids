@@ -823,6 +823,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
     <button class="hbtn" onclick="openLadderWithPassword()" title="사다리 타기">🎰</button>
     <button class="hbtn" onclick="openGameWithPassword()" title="사천성 게임">🐼</button>
+    <button class="hbtn" onclick="openJumpGameWithPassword()" title="점프 달리기">🚀</button>
     <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
     <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
     <button class="hbtn" onclick="openBackupModal()" title="데이터 관리">💾</button>
@@ -1447,6 +1448,11 @@ function openLadderWithPassword() {
 function openGameWithPassword() {
   openPasswordModal('사천성 게임 🐼', '사천성 게임을 시작하려면 비밀번호를 입력해주세요 🔒', () => {
     openGameModal(curChild(), toKey(today()));
+  });
+}
+function openJumpGameWithPassword() {
+  openPasswordModal('점프 달리기 🚀', '점프 달리기를 시작하려면 비밀번호를 입력해주세요 🔒', () => {
+    window.open('jump_runner_game.html', '_blank');
   });
 }
 let LDR={rewards:[],rungs:[],xPos:[],H:160,W:380,userSlot:-1,numCols:5,running:false,userChild:null,streak:0};

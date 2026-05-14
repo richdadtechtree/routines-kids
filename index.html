@@ -1200,6 +1200,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
       <div style="font-size: 11px; color: var(--muted); margin-top: 8px; text-align: center; word-break: keep-all;">
         💡 규칙: 같은 모양의 타일을 최대 두 번 꺾이는 선으로 방해물 없이 이을 수 있으면 지울 수 있어요! 막히면 <strong>섞기</strong>를 눌러주세요.
       </div>
+      <button class="btn-sec" onclick="closeGameModal()" style="margin-top: 12px; font-weight: 700;">🚪 게임 종료 (나가기)</button>
     </div>
     
     <div id="gameResult" style="display: none;">
@@ -1561,8 +1562,41 @@ function drawLdrUI(){
   rungs.forEach(r=>{h+=`<line x1="${xPos[r.from]}" y1="${r.y}" x2="${xPos[r.to]}" y2="${r.y}" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>`;});
   svg.innerHTML=h;
 }
+function playLadderBGM() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    for (let i = 0; i < 16; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      const startTime = now + i * (0.22 - i * 0.008);
+      const freq = 60 + i * 15;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, startTime + 0.1);
+      gain.gain.setValueAtTime(0.35, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+      osc.start(startTime); osc.stop(startTime + 0.1);
+    }
+    const fanfareTime = now + 2.2;
+    [523.25, 659.25, 783.99, 1046.50].forEach((f, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, fanfareTime + idx * 0.08);
+      gain.gain.setValueAtTime(0.25, fanfareTime + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.01, fanfareTime + idx * 0.08 + 0.4);
+      osc.start(fanfareTime + idx * 0.08); osc.stop(fanfareTime + idx * 0.08 + 0.4);
+    });
+  } catch(e) {}
+}
 function startLadder(){
   if(LDR.running)return;LDR.running=true;
+  playLadderBGM();
   const btn=document.getElementById('ladderStartBtn');btn.disabled=true;btn.textContent='⏳ 내려가는 중...';
   const{xPos,rungs,H,userSlot,rewards,userChild}=LDR;
   const yLevels=[...new Set(rungs.map(r=>r.y))].sort((a,b)=>a-b);

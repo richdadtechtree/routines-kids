@@ -2,24 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<script>
-  // iPadOS 웹앱(PWA/바로가기)으로 켤 때 모든 것이 거대하게 줌인되는 현상 방지용 동적 뷰포트
-  (function() {
-    const isIPad = /Macintosh|iPad/.test(navigator.userAgent) && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-    if (isIPad && isStandalone) {
-      document.write('<meta name="viewport" content="width=device-width, initial-scale=0.82, maximum-scale=0.82, user-scalable=no, viewport-fit=cover">');
-    } else {
-      document.write('<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover">');
-    }
-  })();
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
 <!-- iPadOS/iOS 홈 화면 바로가기(PWA) 웹앱 최적화 설정 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="루틴노트">
-<title>은둥이네 꾸준히 습관 만들기 🌟</title>
+<title>은둥이네 꾸준히 습관 만들기 🌟 (v1.3.6)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════
@@ -613,6 +602,9 @@ textarea.form-input { resize: none; line-height: 1.7; }
     -webkit-text-size-adjust: none !important;
     text-size-adjust: none !important;
   }
+  body {
+    zoom: 0.80 !important; /* 웹앱 가동 시 모든 요소의 크기를 80%로 축소하여 모바일 뷰 최적화 */
+  }
 }
 
 @media (min-width: 600px) {
@@ -840,7 +832,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
 <header class="app-header">
   <div class="logo">
     <span class="logo-icon">🌟</span>
-    <span class="logo-text">은둥이네 꾸준히 습관 만들기 <span style="font-size: 9px; font-weight: normal; color: var(--muted); opacity: 0.8; margin-left: 2px;">v1.3.5</span></span>
+    <span class="logo-text">은둥이네 꾸준히 습관 만들기 <span style="font-size: 9px; font-weight: normal; color: var(--muted); opacity: 0.8; margin-left: 2px;">v1.3.6</span></span>
   </div>
   <div class="hbtns">
     <button class="hbtn" onclick="goToday()" title="오늘">🗓</button>
@@ -896,7 +888,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <div id="progressBars" style="display: flex; justify-content: space-between; gap: 6px;"></div>
   </div>
   <div class="app-version-footer" style="text-align: center; margin-top: 4px; margin-bottom: 4px; font-size: 10px; color: var(--muted); opacity: 0.7;">
-    아이들 루틴노트 v1.3.5 • 업데이트: 2026.05.20
+    아이들 루틴노트 v1.3.6 • 업데이트: 2026.05.20
   </div>
 </main>
 

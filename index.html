@@ -87,7 +87,7 @@ body {
 ════════════════════════════════════ */
 .child-tabs {
   display: flex; gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   overflow-x: auto; padding-bottom: 2px;
   scrollbar-width: none; align-items: center;
 }
@@ -126,20 +126,20 @@ body {
 .summary-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px; margin-bottom: 12px;
+  gap: 6px; margin-bottom: 8px;
 }
 .summary-card {
   background: var(--card); border-radius: var(--r);
-  padding: 12px 8px; text-align: center;
+  padding: 8px 6px; text-align: center;
   box-shadow: var(--sh); border: 1px solid var(--bdr);
 }
-.summary-num   { font-size: 22px; font-weight: 900; color: var(--pri); line-height: 1; }
-.summary-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.summary-num   { font-size: 20px; font-weight: 900; color: var(--pri); line-height: 1; }
+.summary-label { font-size: 9px; color: var(--muted); margin-top: 2px; }
 
 /* ════════════════════════════════════
    연속 뱃지
 ════════════════════════════════════ */
-.streak-area { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.streak-area { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
 .streak-badge {
   display: flex; align-items: center; gap: 4px;
   padding: 4px 10px; border-radius: 100px;
@@ -279,7 +279,7 @@ table.matrix {
   padding: 0;
   vertical-align: middle;
   position: relative;
-  height: 52px; /* 셀의 최소 높이를 확보하여 더 시원하고 정확하게 터치되도록 함 */
+  height: 42px; /* 52px -> 42px로 줄여서 세로 여백 대폭 압축 */
 }
 .check-btn:active:not(:disabled) .check-cell { transform: scale(.84); }
 
@@ -297,15 +297,10 @@ table.matrix {
 ════════════════════════════════════ */
 .progress-section {
   background: var(--card); border-radius: var(--r);
-  padding: 14px; box-shadow: var(--sh);
-  border: 1px solid var(--bdr); margin-bottom: 12px;
+  padding: 10px 14px; box-shadow: var(--sh);
+  border: 1px solid var(--bdr); margin-bottom: 8px;
 }
-.section-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-.prog-row  { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.prog-day  { font-size: 11px; width: 22px; text-align: center; color: var(--muted); flex-shrink: 0; }
-.prog-track{ flex: 1; height: 8px; background: #F3F4F6; border-radius: 100px; overflow: hidden; }
-.prog-fill { height: 100%; border-radius: 100px; transition: width .4s; }
-.prog-pct  { font-size: 11px; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+.section-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
 
 /* ════════════════════════════════════
    모달 공통 — 모바일 하단 시트
@@ -885,7 +880,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
   </div>
   <div class="progress-section">
     <div class="section-title">📊 이번 주 일별 달성률</div>
-    <div id="progressBars"></div>
+    <div id="progressBars" style="display: flex; justify-content: space-between; gap: 6px;"></div>
   </div>
 </main>
 
@@ -1478,9 +1473,27 @@ function renderMatrix(){
 function renderProgress(){
   const child=curChild(),r=allR(),n=r.length;
   document.getElementById('progressBars').innerHTML=Array.from({length:7},(_,i)=>addDays(weekStart,i)).map(d=>{
-    if(isFuture(d)||n===0)return`<div class="prog-row"><span class="prog-day">${DN[d.getDay()]}</span><div class="prog-track"><div class="prog-fill" style="width:0;background:#E5E7EB;"></div></div><span class="prog-pct" style="color:#D1D5DB">-</span></div>`;
+    const isT = isToday(d);
+    if(isFuture(d)||n===0) {
+      return `
+        <div class="prog-col" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;">
+          <span style="font-size: 9px; color: var(--muted); ${isT?'color:var(--pri);font-weight:700':''}">${DN[d.getDay()]}</span>
+          <div style="width: 100%; height: 22px; background: #E5E7EB; border-radius: 6px; display: flex; align-items: center; justify-content: center; position: relative;">
+            <span style="font-size: 9px; font-weight: 700; color: #9CA3AF; z-index: 1;">-</span>
+          </div>
+        </div>
+      `;
+    }
     const k=toKey(d),done=r.filter(x=>child.checks[`${k}_${x.id}`]).length,pct=Math.round(done/n*100),col=pct>=80?'#22C55E':pct>=50?'#F59E0B':'#EF4444';
-    return`<div class="prog-row"><span class="prog-day" style="${isToday(d)?'color:var(--pri);font-weight:700':''}">${DN[d.getDay()]}</span><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${col};"></div></div><span class="prog-pct" style="color:${col}">${pct}%</span></div>`;
+    return `
+      <div class="prog-col" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;">
+        <span style="font-size: 9px; color: var(--muted); ${isT?'color:var(--pri);font-weight:700':''}">${DN[d.getDay()]}</span>
+        <div style="width: 100%; height: 22px; background: #F3F4F6; border-radius: 6px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 1px solid var(--bdr);">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; height: ${pct}%; background: ${col}; opacity: 0.85; transition: height .4s;"></div>
+          <span style="font-size: 9px; font-weight: 800; color: ${pct > 30 ? 'white' : '#4B5563'}; z-index: 1;">${pct}%</span>
+        </div>
+      </div>
+    `;
   }).join('');
 }
 

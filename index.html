@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
 <!-- iPadOS/iOS 홈 화면 바로가기(PWA) 웹앱 최적화 설정 -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="루틴노트">
@@ -29,11 +30,13 @@
   --sh-lg:  0 8px 32px rgba(108,99,255,.15);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background: var(--bg); color: var(--txt);
   min-height: 100vh; overflow-x: hidden;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
 }
 
 /* ════════════════════════════════════
@@ -590,6 +593,14 @@ textarea.form-input { resize: none; line-height: 1.7; }
    태블릿 / 데스크탑 보정
    기본이 모바일이므로 큰 화면에서만 확장
 ════════════════════════════════════ */
+/* PWA(standalone) 모드 및 크롬 웹앱 구동 시 폰트 크기 왜곡 방지 및 비율 안정화 */
+@media all and (display-mode: standalone) {
+  html, body {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+}
+
 @media (min-width: 600px) {
   :root { --r-col: 150px; }
 
@@ -871,7 +882,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <div id="progressBars" style="display: flex; justify-content: space-between; gap: 6px;"></div>
   </div>
   <div class="app-version-footer" style="text-align: center; margin-top: 4px; margin-bottom: 4px; font-size: 10px; color: var(--muted); opacity: 0.7;">
-    아이들 루틴노트 v1.3.1 • 업데이트: 2026.05.20
+    아이들 루틴노트 v1.3.2 • 업데이트: 2026.05.20
   </div>
 </main>
 

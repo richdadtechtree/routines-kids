@@ -25,11 +25,17 @@
   --sh-lg:  0 8px 32px rgba(108,99,255,.15);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; background: #E5E7EB; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background: var(--bg); color: var(--txt);
   min-height: 100vh; overflow-x: hidden;
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 0 32px rgba(108,99,255,0.15);
+  border-left: 1px solid var(--bdr);
+  border-right: 1px solid var(--bdr);
+  position: relative;
 }
 
 /* ════════════════════════════════════
@@ -44,6 +50,8 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   box-shadow: var(--sh);
   gap: 8px;
+  max-width: 480px;
+  width: 100%;
 }
 .logo { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
 .logo-icon { font-size: 20px; flex-shrink: 0; }
@@ -303,7 +311,10 @@ table.matrix {
    모달 공통 — 모바일 하단 시트
 ════════════════════════════════════ */
 .overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; bottom: 0;
+  left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px;
   background: rgba(0,0,0,.5);
   display: flex; align-items: flex-end; justify-content: center;
   z-index: 1000;
@@ -398,7 +409,10 @@ textarea.form-input { resize: none; line-height: 1.7; }
    루틴왕 — 항상 중앙 팝업
 ════════════════════════════════════ */
 .king-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; bottom: 0;
+  left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px;
   background: rgba(0,0,0,.6);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000; padding: 20px;
@@ -618,6 +632,8 @@ textarea.form-input { resize: none; line-height: 1.7; }
   .overlay {
     align-items: center;
     padding: 20px;
+    left: 50%;
+    transform: translateX(-50%);
   }
   .modal {
     border-radius: 22px;
@@ -657,11 +673,11 @@ textarea.form-input { resize: none; line-height: 1.7; }
 
 /* ════════ 사천성 랭킹 패널 ════════ */
 .rankings-panel {
-  position: fixed;
-  top: 68px;
-  right: 16px;
+  position: absolute;
+  top: 58px;
+  right: 12px;
   width: 320px;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100% - 24px);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
   border: 1.5px solid var(--bdr);

@@ -2,7 +2,18 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
+<script>
+  // iPadOS 웹앱(PWA/바로가기)으로 켤 때 모든 것이 거대하게 줌인되는 현상 방지용 동적 뷰포트
+  (function() {
+    const isIPad = /Macintosh|iPad/.test(navigator.userAgent) && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    if (isIPad && isStandalone) {
+      document.write('<meta name="viewport" content="width=device-width, initial-scale=0.82, maximum-scale=0.82, user-scalable=no, viewport-fit=cover">');
+    } else {
+      document.write('<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover">');
+    }
+  })();
+</script>
 <!-- iPadOS/iOS 홈 화면 바로가기(PWA) 웹앱 최적화 설정 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,13 +41,13 @@
   --sh-lg:  0 8px 32px rgba(108,99,255,.15);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+html { -webkit-text-size-adjust: none !important; text-size-adjust: none !important; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background: var(--bg); color: var(--txt);
   min-height: 100vh; overflow-x: hidden;
-  -webkit-text-size-adjust: 100% !important;
-  text-size-adjust: 100% !important;
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
 /* ════════════════════════════════════
@@ -51,6 +62,9 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   box-shadow: var(--sh);
   gap: 8px;
+  max-width: 520px;
+  margin: 0 auto;
+  left: 0; right: 0;
 }
 .logo { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
 .logo-icon { font-size: 20px; flex-shrink: 0; }
@@ -76,7 +90,7 @@ body {
 ════════════════════════════════════ */
 .main {
   padding: 12px;
-  max-width: 768px;
+  max-width: 520px;
   margin: 0 auto;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
@@ -596,13 +610,13 @@ textarea.form-input { resize: none; line-height: 1.7; }
 /* PWA(standalone) 모드 및 크롬 웹앱 구동 시 폰트 크기 왜곡 방지 및 비율 안정화 */
 @media all and (display-mode: standalone) {
   html, body {
-    -webkit-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
   }
 }
 
 @media (min-width: 600px) {
-  :root { --r-col: 150px; }
+  :root { --r-col: 125px; }
 
   .app-header { padding: 0 20px; height: 56px; }
   .logo-text  { font-size: 15px; }
@@ -644,7 +658,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
 }
 
 @media (min-width: 900px) {
-  :root { --r-col: 170px; }
+  :root { --r-col: 125px; }
   .logo-text { font-size: 17px; }
   .summary-num { font-size: 26px; }
 
@@ -882,7 +896,7 @@ textarea.form-input { resize: none; line-height: 1.7; }
     <div id="progressBars" style="display: flex; justify-content: space-between; gap: 6px;"></div>
   </div>
   <div class="app-version-footer" style="text-align: center; margin-top: 4px; margin-bottom: 4px; font-size: 10px; color: var(--muted); opacity: 0.7;">
-    아이들 루틴노트 v1.3.2 • 업데이트: 2026.05.20
+    아이들 루틴노트 v1.3.4 • 업데이트: 2026.05.20
   </div>
 </main>
 

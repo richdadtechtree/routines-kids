@@ -88,11 +88,120 @@
     font-size: 15px; color: #6b7aaa;
     letter-spacing: 1px;
   }
+
+  /* ── 가로 화면 경고/전환 오버레이 ── */
+  #orientation-warning {
+    display: none;
+    position: fixed; inset: 0;
+    background: #0d0d2a;
+    z-index: 10000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 24px;
+    font-family: 'Jua', sans-serif;
+  }
+  @media screen and (orientation: portrait) and (max-width: 767px) {
+    #orientation-warning {
+      display: flex;
+    }
+  }
+  .warning-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 320px;
+  }
+  .warning-icon {
+    font-size: 64px;
+    animation: rotate-phone 2s infinite ease-in-out;
+  }
+  @keyframes rotate-phone {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .warning-title {
+    font-size: 24px;
+    color: #ffe066;
+  }
+  .warning-desc {
+    font-size: 15px;
+    color: #8fa0dd;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+  .warning-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .warning-btn {
+    font-family: 'Jua', sans-serif;
+    font-size: 16px;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.1s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .warning-btn:active { transform: scale(0.97); }
+  .warning-btn.rotate-btn {
+    background: linear-gradient(135deg, #ffe066, #ff9966);
+    color: #0d0d1a;
+  }
+  .warning-btn.bypass-btn {
+    background: #2a2f5b;
+    color: #8fa0dd;
+    border: 1px solid #2a2f5b;
+  }
+
+  /* 강제 가로 모드 (세로화면에서 강제로 90도 회전시켜 가로로 배치) */
+  body.force-landscape {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    width: 100vh;
+    height: 100vw;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -50vw;
+    margin-left: -50vh;
+    overflow: hidden;
+  }
+  body.force-landscape #starfield {
+    width: 100vh !important;
+    height: 100vw !important;
+  }
 </style>
+
+
+
 </head>
 <body>
 
+<!-- 가로 화면 경고 및 자동 전환 헬퍼 오버레이 -->
+<div id="orientation-warning">
+  <div class="warning-content">
+    <div class="warning-icon">📱🔄</div>
+    <div class="warning-title">화면을 가로로 돌려주세요!</div>
+    <div class="warning-desc">점프 게임은 가로 화면에 최적화되어 있습니다. 스마트폰의 화면 회전을 켜고 가로로 돌려주세요.</div>
+    <div class="warning-btns">
+      <button onclick="forceLandscape()" class="warning-btn rotate-btn">가로 화면으로 자동 전환 🔄</button>
+      <button onclick="bypassWarning()" class="warning-btn bypass-btn">그냥 세로로 할래요 😅</button>
+    </div>
+  </div>
+</div>
+
 <canvas id="starfield"></canvas>
+
 
 <div id="wrapper">
   <div id="hud">
@@ -911,6 +1020,39 @@ function drawBird(ctx, o) {
   ctx.beginPath();
   ctx.arc(cx + w * 0.21, cy - 3, 1, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// ════════════════════════════════════════
+//  가로 화면 오버레이 기능 제어
+// ════════════════════════════════════════
+function bypassWarning() {
+  document.getElementById('orientation-warning').style.setProperty('display', 'none', 'important');
+}
+
+function forceLandscape() {
+  document.getElementById('orientation-warning').style.setProperty('display', 'none', 'important');
+  document.body.classList.add('force-landscape');
+  
+  // 강제 회전에 따른 캔버스 크기 재조정 트리거
+  const sc = document.getElementById('starfield');
+  if (sc) {
+    sc.width = window.innerHeight;
+    sc.height = window.innerWidth;
+    
+    // 별 배경 다시 그리기
+    const ctx = sc.getContext('2d');
+    ctx.clearRect(0, 0, sc.width, sc.height);
+    for (let i = 0; i < 180; i++) {
+      const x = Math.random() * sc.width;
+      const y = Math.random() * sc.height;
+      const r = Math.random() * 1.4;
+      const a = Math.random() * 0.7 + 0.1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,210,255,${a})`;
+      ctx.fill();
+    }
+  }
 }
 
 // ════════════════════════════════════════

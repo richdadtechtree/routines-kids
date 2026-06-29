@@ -1252,8 +1252,8 @@ if (
 }
 
 // ════════ 상수 ════════
-const REWARDS=[{icon:'🏪',name:'다이소\n1,000원권'},{icon:'🏪',name:'편의점\n1,000원권'},{icon:'🍦',name:'아이스크림\n1개'},{icon:'🪙',name:'용돈\n1,000원'},{icon:'📱',name:'패드\n30분'},{icon:'🍪',name:'과자\n1봉지'}];
-const SPECIAL_REWARDS=[{icon:'📚',name:'도서\n구매권'},{icon:'🍿',name:'퍼니스낵\n자유 구매권(1개)'},{icon:'👩‍👧',name:'엄마와\n데이트권(주말)'},{icon:'👨‍👧',name:'아빠와\n데이트권(주말)'},{icon:'🪙',name:'용돈\n3,000원'},{icon:'🎟️',name:'평일 하루\n자유 이용권'}];
+const REWARDS=[{icon:'🏪',name:'다이소\n1,000원권'},{icon:'🏪',name:'편의점\n1,000원권'},{icon:'🍦',name:'아이스크림\n1개'},{icon:'🪙',name:'용돈\n1,000원'},{icon:'🍪',name:'과자\n1봉지'}];
+const SPECIAL_REWARDS=[{icon:'📚',name:'도서\n구매권'},{icon:'🍿',name:'퍼니스낵\n자유 구매권(1개)'},{icon:'👩‍👧',name:'엄마와\n데이트권(주말)'},{icon:'👨‍👧',name:'아빠와\n데이트권(주말)'},{icon:'🪙',name:'용돈\n3,000원'},{icon:'🎟️',name:'평일 하루\n자유 이용권'},{icon:'✨',name:'내가 하고싶은\n거 하기'}];
 const ROUTINE_ICONS=['🦷','📖','✏️','🏃','🛁','🍎','💊','🧹','🐶','😴','🎸','🖥️','🧘','💪','🎨','🎯'];
 const CHILD_AVATARS=['👦','👧','🧒','🐱','🐶','🦊','🐼','🐨','🐸','🦁','🐯','🐰'];
 const CHILD_COLORS=['#6C63FF','#FF6B9D','#22C55E','#F59E0B','#3B82F6','#EF4444','#8B5CF6','#14B8A6'];
@@ -1580,8 +1580,28 @@ let curCoupon={childName:'',rewardName:'',icon:''};
 function openLadder(streak,routineName,routineId,isSpecial){
   LDR.streak=streak||0;LDR.userSlot=-1;LDR.running=false;LDR.numCols=5;LDR.userChild=curChild();
   LDR.routineId=routineId||null;LDR.isSpecial=!!isSpecial;
-  const pool=LDR.isSpecial?SPECIAL_REWARDS:REWARDS;
-  LDR.rewards=[...pool].sort(()=>Math.random()-.5).slice(0,5);
+  if (LDR.isSpecial) {
+    LDR.rewards=[...SPECIAL_REWARDS].sort(()=>Math.random()-.5).slice(0,5);
+  } else {
+    LDR.rewards = Array.from({length: 5}, () => {
+      const r = Math.random() * 100;
+      if (r < 1) return {icon:'📚', name:'도서\n구매권'};
+      if (r < 2) return {icon:'🍿', name:'퍼니스낵\n자유 구매권(1개)'};
+      if (r < 3) return {icon:'👩‍👧', name:'엄마와\n데이트권(주말)'};
+      if (r < 4) return {icon:'👨‍👧', name:'아빠와\n데이트권(주말)'};
+      if (r < 7) return {icon:'🎬', name:'영화관\n데이트'};
+      if (r < 8) return {icon:'✨', name:'내가 하고싶은\n거 하기'};
+      const remRewards = [
+        {icon:'🏪',name:'다이소\n1,000원권'},
+        {icon:'🏪',name:'편의점\n1,000원권'},
+        {icon:'🍦',name:'아이스크림\n1개'},
+        {icon:'🪙',name:'용돈\n1,000원'},
+        {icon:'🍪',name:'과자\n1봉지'}
+      ];
+      const idx = Math.min(4, Math.floor((r - 8) / 18.4));
+      return remRewards[idx];
+    });
+  }
   document.getElementById('ladderSub').textContent=LDR.isSpecial?`🎉 평일 15회 연속 달성 스페셜! ${routineName} 특별 보상`:(streak?`🔥 ${streak}일 연속! ${routineName} 보상을 받으세요`:'사다리 타기를 즐겨보세요!');
   renderSlots();
   document.getElementById('ladderStep1').style.display='block';

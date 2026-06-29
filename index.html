@@ -819,7 +819,7 @@ html.webapp, html.webapp body {
     <button class="hbtn" onclick="openReadingLog()" title="독서 로그">📚</button>
     <button class="hbtn" onclick="openLadderWithPassword()" title="사다리 타기">🎰</button>
     <button class="hbtn" onclick="openManualGameSelectWithPassword()" title="미니게임 모음">🎮</button>
-    <button class="hbtn" onclick="checkKingManual()" title="루틴왕">👑</button>
+    <button class="hbtn" onclick="openRoutineKingHistory()" title="루틴왕 기록">👑</button>
     <button class="hbtn" onclick="toggleSichuanRankings()" title="사천성 랭킹">🏆</button>
     <button class="hbtn" onclick="openBackupModal()" title="데이터 관리">💾</button>
   </div>
@@ -975,6 +975,39 @@ html.webapp, html.webapp body {
         <button class="btn-pri" id="downloadCouponBtn" onclick="downloadCoupon()" style="margin-top:16px; font-size:15px; display:none; background:#10B981; border:none;">📸 당첨 쿠폰 확인 및 사진 저장</button>
       </div>
       <button class="ldr-start" id="ladderStartBtn" onclick="startLadder()">🎲 사다리 출발!</button>
+    </div>
+  </div>
+</div>
+
+<!-- 루틴왕 명예의 전당 & 역대 기록 모달 -->
+<div class="overlay" id="routineKingHistoryModal" style="display:none;">
+  <div class="modal" style="max-width: 480px;">
+    <button class="modal-x" onclick="closeModal('routineKingHistoryModal')">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span style="font-size:28px;">👑</span>
+      <div>
+        <div class="modal-title" style="margin-bottom:2px;">루틴왕 명예의 전당 & 기록</div>
+        <div style="font-size:11px;color:var(--muted);">매월 가장 루틴을 열심히 실천한 루틴왕들의 기록입니다!</div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <div class="section-title" style="font-size: 13px; color: var(--pri); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <span>⚡ 이번 달 실시간 순위</span>
+        <span style="font-size: 10px; color: var(--muted); font-weight: normal;">*완료 횟수 기준</span>
+      </div>
+      <div class="rankings-list" id="routineCurrentRankingsList" style="max-height: 180px;">
+        <!-- Dynamically loaded -->
+      </div>
+    </div>
+    
+    <div>
+      <div class="section-title" style="font-size: 13px; color: var(--warn); margin-bottom: 8px;">
+        🏛️ 역대 월별 루틴왕 기록
+      </div>
+      <div class="rankings-list" id="routineKingHistoryList" style="max-height: 240px;">
+        <!-- Dynamically loaded -->
+      </div>
     </div>
   </div>
 </div>
@@ -1782,6 +1815,164 @@ function checkKingOnLoad(){
   if(isFirst&&!state.kingShown[pk]&&state.children.length>0)showKing(pm,pk);
 }
 function checkKingManual(){const now=today(),tm=new Date(now.getFullYear(),now.getMonth(),1);showKing(tm,`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);}
+
+function getRoutineRankings(targetMonth) {
+  const tm = targetMonth.getMonth();
+  const ty = targetMonth.getFullYear();
+  
+  const results = state.children.map(c => {
+    let count = 0;
+    Object.keys(c.checks).forEach(k => {
+      if (c.checks[k]) {
+        const parts = k.split('_')[0].split('-');
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          if (m === tm && y === ty) {
+            count++;
+          }
+        }
+      }
+    });
+    return { child: c, count };
+  });
+  
+  return results.sort((a, b) => b.count - a.count);
+}
+
+function getPastMonths() {
+  const monthsSet = new Set();
+  state.children.forEach(c => {
+    Object.keys(c.checks).forEach(k => {
+      if (c.checks[k]) {
+        const parts = k.split('_')[0].split('-');
+        if (parts.length === 3) {
+          monthsSet.add(`${parts[0]}-${parts[1]}`);
+        }
+      }
+    });
+  });
+  return Array.from(monthsSet).sort().reverse();
+}
+
+function openRoutineKingHistory() {
+  renderRoutineCurrentRankings();
+  renderRoutineKingHistory();
+  document.getElementById('routineKingHistoryModal').style.display = 'flex';
+}
+
+function renderRoutineCurrentRankings() {
+  const now = today();
+  const ranks = getRoutineRankings(now);
+  const listContainer = document.getElementById('routineCurrentRankingsList');
+  
+  if (!ranks.length || ranks.every(r => r.count === 0)) {
+    listContainer.innerHTML = `
+      <div class="rank-empty">
+        아직 이번 달 루틴 기록이 없어요. 루틴을 체크해 보세요! 😊
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  ranks.forEach((item, index) => {
+    const isLead = index === 0 && item.count > 0;
+    const badge = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
+    
+    html += `
+      <div class="rank-item${isLead ? ' is-me' : ''}">
+        <div class="rank-badge">${badge}</div>
+        <div class="rank-av" style="background:${item.child.color}20; border-color:${item.child.color}; color:${item.child.color}; font-weight:700;">${item.child.avatar}</div>
+        <div class="rank-details">
+          <div class="rank-name-row">
+            <span class="rank-name" style="${isLead ? 'color:var(--pri); font-weight:900;' : ''}">${item.child.name}</span>
+            <span class="rank-score">${item.count}회 완료</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  const hasChecks = ranks.some(r => r.count > 0);
+  if (hasChecks) {
+    html += `
+      <div style="text-align: center; margin-top: 8px;">
+        <button class="btn-pri" style="padding: 6px 12px; font-size: 11px; width: auto; border-radius: 100px;" onclick="showCurrentMonthKingCelebration()">
+          🏆 이번 달 시상식 보기 🎉
+        </button>
+      </div>
+    `;
+  }
+  
+  listContainer.innerHTML = html;
+}
+
+function showCurrentMonthKingCelebration() {
+  const now = today();
+  const mk = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  showKing(now, mk);
+}
+
+function renderRoutineKingHistory() {
+  const listContainer = document.getElementById('routineKingHistoryList');
+  const now = today();
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const pastMonths = getPastMonths().filter(m => m !== currentMonthStr);
+  
+  if (pastMonths.length === 0) {
+    listContainer.innerHTML = `
+      <div class="rank-empty">
+        이전 달의 루틴 기록이 없습니다.
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  pastMonths.forEach(m => {
+    const parts = m.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const targetDate = new Date(year, month - 1, 1);
+    
+    const ranks = getRoutineRankings(targetDate);
+    const best = ranks[0];
+    
+    if (best && best.count > 0) {
+      const winners = ranks.filter(r => r.count === best.count && r.count > 0);
+      const winnersName = winners.map(w => w.child.name).join(', ');
+      const winnersAvatar = winners.map(w => w.child.avatar).join('');
+      
+      html += `
+        <div class="rank-item" style="border-left: 4px solid var(--warn);">
+          <div class="rank-badge">🥇</div>
+          <div class="rank-av" style="background:#FFF7ED; border-color:#F59E0B; color:#9A3412; font-weight:700;">${winnersAvatar}</div>
+          <div class="rank-details">
+            <div class="rank-name-row">
+              <span class="rank-name" style="font-weight:900;">${year}년 ${month}월 루틴왕: ${winnersName}</span>
+              <span class="rank-score" style="color:var(--pri);">${best.count}회</span>
+            </div>
+            <div class="rank-subtext" style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <span>참 잘했어요! 👏👏</span>
+              <button class="r-act-btn edit" style="padding: 1px 6px; font-size: 9px; height: 18px; border-radius: 4px;" onclick="showPastMonthKingCelebration(${year}, ${month})">
+                🎉 시상식 보기
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  });
+  
+  listContainer.innerHTML = html;
+}
+
+function showPastMonthKingCelebration(year, month) {
+  const targetDate = new Date(year, month - 1, 1);
+  const mk = `${year}-${String(month).padStart(2, '0')}`;
+  showKing(targetDate, mk);
+}
 function showKing(targetMonth,mk){
   const scores=state.children.map(c=>{let cnt=0;const tm=targetMonth.getMonth(),ty=targetMonth.getFullYear();Object.keys(c.checks).forEach(k=>{if(c.checks[k]){const parts=k.split('_')[0].split('-');if(parts.length===3){const y=parseInt(parts[0],10);const m=parseInt(parts[1],10)-1;if(m===tm&&y===ty)cnt++;}}});return{c,cnt};});
   const best=scores.sort((a,b)=>b.cnt-a.cnt)[0];
